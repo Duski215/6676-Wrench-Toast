@@ -1,19 +1,19 @@
 package org.firstinspires.ftc.teamcode;
+
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
+import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 import com.qualcomm.robotcore.hardware.DcMotor;
 
-import static java.lang.Thread.sleep;
-
-@Autonomous(name = "auto2", group= "something")
-public class auto2 extends LinearOpMode {
-    DcMotor frontLeft = null;
-    DcMotor frontRight = null;
-    DcMotor backRight = null;
-    DcMotor backLeft = null;
+@Autonomous(name = "auto strafe", group= "something")
+public class auto_strafe extends  LinearOpMode {
+    DcMotor frontLeft;
+    DcMotor frontRight;
+    DcMotor backRight;
+    DcMotor backLeft;
 
     @Override
-    public void runOpMode()  {
+    public void runOpMode() {
         frontLeft = hardwareMap.get(DcMotor.class, "motor0");
         frontRight = hardwareMap.get(DcMotor.class, "motor2");
         backLeft = hardwareMap.get(DcMotor.class, "motor1");
@@ -27,31 +27,13 @@ public class auto2 extends LinearOpMode {
 
         waitForStart();
 
-        while (opModeIsActive()) {
-            moveForward(0.7, 500);
-            stop();
-            turnRight(0.7, 1000);
-            stop();
-            moveForward(0.7, 2000);
-            stop();
-        }
+        double power = 0.5;
 
-    }
-
-    public void moveForward(double power, long time) {
         frontLeft.setPower(power);
-        frontRight.setPower(power);
-        backLeft.setPower(power);
-        backRight.setPower(power);
-        sleep(time);
-
-    }
-
-    public void turnRight(double power, long time) {
-        frontLeft.setPower(power);
-        frontRight.setPower(-power);
         backLeft.setPower(-power);
+        frontRight.setPower(-power);
         backRight.setPower(power);
-        sleep(time);
+
+        sleep(2000);
     }
 }

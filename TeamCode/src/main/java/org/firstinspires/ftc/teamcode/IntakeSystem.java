@@ -6,8 +6,8 @@ import com.qualcomm.robotcore.hardware.Servo;
 
 @TeleOp(name="ServoTest")
 public class IntakeSystem extends OpMode {
-    private CRServo intakeServoLeft;
-    private CRServo intakeServoRight;
+    private Servo intakeServoLeft;
+    private Servo intakeServoRight;
     private Servo horizontalSlideLeft;
     private Servo horizontalSlideRight;
     private CRServo passoverServoLeft;
@@ -22,14 +22,14 @@ public class IntakeSystem extends OpMode {
 
     @Override
     public void init() {
-        intakeServoLeft = hardwareMap.get(CRServo.class, "servo0");
-        intakeServoRight = hardwareMap.get(CRServo.class, "servo1");
+        intakeServoLeft = hardwareMap.get(Servo.class, "servo0");
+        intakeServoRight = hardwareMap.get(Servo.class, "servo1");
         horizontalSlideLeft = hardwareMap.get(Servo.class, "servo2");
         horizontalSlideRight = hardwareMap.get(Servo.class, "servo3");
         passoverServoLeft = hardwareMap.get(CRServo.class, "passoverServo4");
         passoverServoRight = hardwareMap.get(CRServo.class,"passoverServo5");
 
-        intakeServoLeft.setDirection(CRServo.Direction.REVERSE);
+        intakeServoLeft.setDirection(Servo.Direction.REVERSE);
         horizontalSlideRight.setDirection(Servo.Direction.REVERSE); // this aint a typo it supposed to be right idk why
         passoverServoLeft.setDirection(CRServo.Direction.REVERSE);
 
@@ -40,19 +40,14 @@ public class IntakeSystem extends OpMode {
     public void loop() {
         //intake
         if (gamepad1.right_trigger > 0) {
-            intakeServoLeft.setPower(0.7);
-            intakeServoRight.setPower(0.7);
+            intakeServoLeft.setPosition(1);
+            intakeServoRight.setPosition(1);
         }
 
         //outtake
-        else if (gamepad1.left_trigger > 0) {
-            intakeServoLeft.setPower(-0.7);
-            intakeServoRight.setPower(-0.7);
-        }
-
-        else {
-            intakeServoLeft.setPower(0);
-            intakeServoRight.setPower(0);
+        if (gamepad1.left_trigger > 0) {
+            intakeServoLeft.setPosition(0);
+            intakeServoRight.setPosition(0);
         }
 
         // extend
