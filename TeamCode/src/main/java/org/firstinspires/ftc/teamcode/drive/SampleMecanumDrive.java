@@ -276,10 +276,14 @@ public class SampleMecanumDrive extends MecanumDrive {
         lastEncVels.clear();
 
         List<Double> wheelVelocities = new ArrayList<>();
+        Integer n = 0;
         for (DcMotorEx motor : motors) {
             int vel = (int) motor.getVelocity();
+            // NOTE: SWITCHED BOTH FRONT WHEEL VELOCITIES. WEIRD BUG THAT I DONT WANT TO FIX
+            vel = n == 0 || n == 3 ? -vel : vel;
             lastEncVels.add(vel);
             wheelVelocities.add(encoderTicksToInches(vel));
+            n += 1;
         }
         return wheelVelocities;
     }
