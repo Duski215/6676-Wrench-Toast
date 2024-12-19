@@ -33,8 +33,8 @@ public class auto extends LinearOpMode {
     final double     WHEEL_DIAMETER_INCHES   = 3.78 ;     // For figuring circumference
     final double     COUNTS_PER_INCH         = (COUNTS_PER_MOTOR_REV * DRIVE_GEAR_REDUCTION) /
             (WHEEL_DIAMETER_INCHES * 3.1415);
-    final double     DRIVE_SPEED             = 0.6;
-    final double     TURN_SPEED              = 0.5;
+    final double     DRIVE_SPEED             = 1;
+    final double     TURN_SPEED              = 1;
 
     public void runOpMode() {
         // Initialize the drive system variables.
@@ -76,9 +76,10 @@ public class auto extends LinearOpMode {
         // Step through each leg of the path
         // TODO: PATHING
 
-        moveForward(6);
+        //blue close
+        moveBackward(12);
+        moveForward(12);
         turnRight(90);
-        moveForward(6);
 
         telemetry.addData("Path", "Complete");
         telemetry.update();
@@ -176,7 +177,7 @@ public class auto extends LinearOpMode {
         backLeft.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
         backRight.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
 
-        sleep(1000);   // optional pause after each move.
+        sleep(2000);   // optional pause after each move.
     }
 }
 

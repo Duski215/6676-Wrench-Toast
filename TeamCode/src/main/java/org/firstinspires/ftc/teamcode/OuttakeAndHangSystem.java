@@ -75,7 +75,13 @@ public class OuttakeAndHangSystem extends OpMode {
             positionMidHang();
         }
 
-        //Outtake servo code here
+        //
+        /*The commands under hear control the outtake system's claw
+        it must pick up from the intake's passover system using a four-bar to position it
+        then it'll pivot into an outtake position
+        the passover position and claw controls should be here
+         */
+
         if (gamepad2.right_trigger > 0){
             outtakeServoLeft.setPosition(0);
             outtakeServoRight.setPosition(0);

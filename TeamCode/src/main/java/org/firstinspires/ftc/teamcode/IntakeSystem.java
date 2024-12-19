@@ -6,12 +6,13 @@ import com.qualcomm.robotcore.hardware.Servo;
 
 @TeleOp(name="ServoTest")
 public class IntakeSystem extends OpMode {
-    private Servo intakeServoLeft;
-    private Servo intakeServoRight;
+
+    //intake here
+    private Servo intakeClawServo;
     private Servo horizontalSlideLeft;
     private Servo horizontalSlideRight;
-    private CRServo passoverServoLeft;
-    private CRServo passoverServoRight;
+    private Servo passoverServoLeft;
+    private Servo passoverServoRight;
 
     /*toggle works poorly because you have to be really quick with the input so it doesn't
      double on it. AKA it goes from being false to true and back to being false
@@ -22,32 +23,29 @@ public class IntakeSystem extends OpMode {
 
     @Override
     public void init() {
-        intakeServoLeft = hardwareMap.get(Servo.class, "servo0");
-        intakeServoRight = hardwareMap.get(Servo.class, "servo1");
+        intakeClawServo = hardwareMap.get(Servo.class, "servo0");
         horizontalSlideLeft = hardwareMap.get(Servo.class, "servo2");
         horizontalSlideRight = hardwareMap.get(Servo.class, "servo3");
-        passoverServoLeft = hardwareMap.get(CRServo.class, "passoverServo4");
-        passoverServoRight = hardwareMap.get(CRServo.class,"passoverServo5");
+        passoverServoLeft = hardwareMap.get(Servo.class, "exPassoverServo3");//wrong config name?
+        passoverServoRight = hardwareMap.get(Servo.class,"passoverServo5");
 
-        intakeServoLeft.setDirection(Servo.Direction.REVERSE);
+//        intakeClawServo.setDirection(Servo.Direction.REVERSE);
         horizontalSlideRight.setDirection(Servo.Direction.REVERSE); // this aint a typo it supposed to be right idk why
-        passoverServoLeft.setDirection(CRServo.Direction.REVERSE);
+        passoverServoLeft.setDirection(Servo.Direction.REVERSE);
 
 //        horizontalSlideRight.scaleRange(0.2,0.8);
     }
 
     @Override
     public void loop() {
-        //intake
-        if (gamepad1.right_trigger > 0) {
-            intakeServoLeft.setPosition(1);
-            intakeServoRight.setPosition(1);
+        //open
+        if (gamepad1.x) {
+            intakeClawServo.setPosition(.21);
         }
 
-        //outtake
-        if (gamepad1.left_trigger > 0) {
-            intakeServoLeft.setPosition(0);
-            intakeServoRight.setPosition(0);
+        //close
+        if (gamepad1.y) {
+            intakeClawServo.setPosition(.4);
         }
 
         // extend
@@ -65,24 +63,20 @@ public class IntakeSystem extends OpMode {
 
         // retract
         if (gamepad1.b) {
-            horizontalSlideLeft.setPosition(0.3);
-            horizontalSlideRight.setPosition(0.3);
+            horizontalSlideLeft.setPosition(0.2);
+            horizontalSlideRight.setPosition(0.2);
         }
-        //intake position
-        if (gamepad2.right_trigger>0){
-            passoverServoLeft.setPower(0.8);
-            passoverServoRight.setPower(0.8);
-        } else {
-            passoverServoLeft.setPower(0);
-            passoverServoRight.setPower(0);
+
+//        intake position
+        //this part will turn the claw between its intake position and passover position
+
+        if (gamepad1.dpad_up) {
+            passoverServoLeft.setPosition(1);
+            passoverServoRight.setPosition(1);
         }
-        //passover position
-        if (gamepad2.left_trigger>0){
-            passoverServoRight.setPower(-1);
-            passoverServoLeft.setPower(-1);
-        } else {
-            passoverServoLeft.setPower(0);
-            passoverServoRight.setPower(0);
+        if (gamepad1.dpad_down){
+            passoverServoRight.setPosition(.3);
+            passoverServoLeft.setPosition(.3);
         }
 
         telemetry.addData("Horizontal Slide Left Position",horizontalSlideLeft.getPosition());

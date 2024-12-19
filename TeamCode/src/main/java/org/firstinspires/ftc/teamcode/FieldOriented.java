@@ -3,6 +3,7 @@ package org.firstinspires.ftc.teamcode;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.hardware.DcMotor;
+import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.util.ElapsedTime;
 import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
 import com.qualcomm.hardware.rev.RevHubOrientationOnRobot;
@@ -59,8 +60,8 @@ public class FieldOriented extends LinearOpMode {
     @Override
     public void runOpMode() {
         frontLeftDrive = hardwareMap.get(DcMotor.class, "motor0");
-        backLeftDrive = hardwareMap.get(DcMotor.class, "motor1");
-        frontRightDrive = hardwareMap.get(DcMotor.class, "motor2");
+        backLeftDrive = hardwareMap.get(DcMotor.class, "motor2");
+        frontRightDrive = hardwareMap.get(DcMotor.class, "motor1");
         backRightDrive = hardwareMap.get(DcMotor.class, "motor3");
         // ########################################################################################
         // !!!            IMPORTANT Drive Information. Test your motor directions.            !!!!!
@@ -96,91 +97,10 @@ public class FieldOriented extends LinearOpMode {
         telemetry.addData("Status", "Initialized");
         telemetry.update();
 
-
-
         waitForStart();
-        runtime.reset();
-
-        // run until the end of the match (driver presses STOP)
-        while (opModeIsActive()) {
-            double max;
-
-            // POV Mode uses left joystick to go forward & strafe, and right joystick to rotate.
-            double y   = -gamepad1.left_stick_y;  // Note: pushing stick forward gives negative value
-            double x =  gamepad1.left_stick_x; //x
-            double rx     =  gamepad1.right_stick_x; //rx
-
-//removed negative from here
-            if (gamepad1.options){
-                imu.resetYaw();
-            }
-
-
-            double heading = imu.getRobotYawPitchRollAngles().getYaw(AngleUnit.RADIANS);
-
-
-            //If it doesn't work properly remove the negative from the Axial
-            //Removed nagative from axial(8:10 AM, 9/30/24)
-            //You may need to switch Axial to Lateral.
-            double adjustedX = x * Math.cos(-heading) - y * Math.sin(-heading);
-            double adjustedY = x * Math.sin(-heading) + y * Math.cos(-heading);
-
-            // Combine the joystick requests for each axis-motion to determine each wheel's power.
-            // Set up a variable for each drive wheel to save the power level for telemetry.
-            double leftFrontPower  = adjustedY + adjustedX + rx;
-            double rightFrontPower = adjustedY - adjustedX - rx;
-            double leftBackPower   = adjustedY - adjustedX + rx;
-            double rightBackPower  = adjustedY + adjustedX - rx;
-
-            // Normalize the values so no wheel power exceeds 100%
-            // This ensures that the robot maintains the desired motion.
-            max = Math.max(Math.abs(leftFrontPower), Math.abs(rightFrontPower));
-            max = Math.max(max, Math.abs(leftBackPower));
-            max = Math.max(max, Math.abs(rightBackPower));
-            //sets default speed
-           double power = 0.7;
-           //slow mode
-           if (gamepad1.right_trigger > 0){
-              power =  (power * 0.5);
-           }
-           //fast mode
-            if (gamepad1.left_trigger > 0){
-                power = 1;
-            }
-
-//            if (max > 1.0) {
-//                leftFrontPower /= max;
-//                rightFrontPower /= max;
-//                leftBackPower /= max;
-//                rightBackPower /= max;
-//            }
-
-            if(gamepad1.left_bumper && !toggleSwitch) {
-                toggleSwitch = true;
-            } else if (gamepad1.left_bumper && toggleSwitch) {
-                toggleSwitch = false;
-            }
-            //converts from field oriented drive to robot oriented drive
-                if (!gamepad1.left_bumper & toggleSwitch) {
-                    leftFrontPower = y + x + rx;
-                    rightFrontPower = y - x - rx;
-                    leftBackPower = y - x + rx;
-                    rightBackPower = y + x - rx;
-                }
-
-            frontLeftDrive.setPower(leftFrontPower * power);
-            frontRightDrive.setPower(rightFrontPower * power);
-            backLeftDrive.setPower(leftBackPower * power);
-            backRightDrive.setPower(rightBackPower * power);
-
-            // IMU testing
-
-            // Show the elapsed game time and wheel power.
-            telemetry.addData("Status", "Run Time: " + runtime.toString());
-            telemetry.addData("Front left/Right", "%4.2f, %4.2f", leftFrontPower, rightFrontPower);
-            telemetry.addData("Back  left/Right", "%4.2f, %4.2f", leftBackPower, rightBackPower);
-            telemetry.update();
-
-        }
+        frontRightDrive.setPower(1);
+        frontLeftDrive.setPower(1);
+        backRightDrive.setPower(1);
+        backRightDrive.setPower(1);
     }
 }

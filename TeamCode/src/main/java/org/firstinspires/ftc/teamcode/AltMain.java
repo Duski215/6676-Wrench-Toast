@@ -2,8 +2,12 @@ package org.firstinspires.ftc.teamcode;
 
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
+import com.qualcomm.robotcore.hardware.AnalogInput;
+import com.qualcomm.robotcore.hardware.AnalogSensor;
 import com.qualcomm.robotcore.hardware.DcMotor;
+import com.qualcomm.robotcore.hardware.DigitalChannel;
 import com.qualcomm.robotcore.hardware.Servo;
+import com.qualcomm.robotcore.hardware.TouchSensor;
 import com.qualcomm.robotcore.util.ElapsedTime;
 import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
 
@@ -62,6 +66,7 @@ public class AltMain extends LinearOpMode {
     private Servo horizontalSlideRight;
     private Servo passoverServoLeft;
     private Servo passoverServoRight;
+    private DigitalChannel buttonSensor;
 
     private DcMotor motorLeftVert;
     private DcMotor motorRightVert;
@@ -84,17 +89,21 @@ public class AltMain extends LinearOpMode {
     //toggleSwitch between Field Centric Drive to Robot Centric Drive
     boolean toggleSwitch = false;
 
+    private final double bufferTime = 400; // seconds
+    private double prevBuffer = 0;
+    private boolean buffer = false;
+
     @Override
     public void runOpMode() throws InterruptedException {
         //if the device name you'll get an error from the driver hub tell you what's wrong
         frontLeftDrive = hardwareMap.get(DcMotor.class, "motor0");
-        backLeftDrive = hardwareMap.get(DcMotor.class, "motor1");
-        frontRightDrive = hardwareMap.get(DcMotor.class, "motor2");
+        backLeftDrive = hardwareMap.get(DcMotor.class, "motor2");
+        frontRightDrive = hardwareMap.get(DcMotor.class, "motor1");
         backRightDrive = hardwareMap.get(DcMotor.class, "motor3");
 
         // todo:change these as wiring has changed
         intakeClawServo = hardwareMap.get(Servo.class, "exServo0");
-        outtakeClawServo = hardwareMap.get(Servo.class, "servo0");
+        outtakeClawServo = hardwareMap.get(Servo.class, "servo1");
 
         horizontalSlideLeft = hardwareMap.get(Servo.class, "servo2");
         horizontalSlideRight = hardwareMap.get(Servo.class, "servo3");
@@ -105,11 +114,11 @@ public class AltMain extends LinearOpMode {
         outtakePositionServoLeft = hardwareMap.get(Servo.class,"servo4");
         outtakePositionServoRight = hardwareMap.get(Servo.class,"servo5");
 
-
-
         motorLeftVert = hardwareMap.get(DcMotor.class, "exMotor0");
         motorRightVert = hardwareMap.get(DcMotor.class, "exMotor1");
         motorHang = hardwareMap.get(DcMotor.class, "exMotor2");
+
+        buttonSensor = hardwareMap.get(DigitalChannel.class,"buttonSensor");
 
         //because we often have motors/servos in pairs facing opposite ways we have to reverse directions
         // so they turn in the same direction
@@ -118,15 +127,15 @@ public class AltMain extends LinearOpMode {
         motorRightVert.setDirection(DcMotorSimple.Direction.REVERSE);
         outtakePositionServoLeft.setDirection(Servo.Direction.REVERSE);
         // reset encoders
-        motorLeftVert.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-        motorRightVert.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+//        motorLeftVert.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+//        motorRightVert.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
         motorHang.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
 
         // set correct motor direction
-        frontLeftDrive.setDirection(DcMotor.Direction.REVERSE);
-        backLeftDrive.setDirection(DcMotor.Direction.REVERSE);
-        frontRightDrive.setDirection(DcMotor.Direction.FORWARD);
-        backRightDrive.setDirection(DcMotor.Direction.FORWARD);
+        frontLeftDrive.setDirection(DcMotor.Direction.REVERSE); // reverse og
+        backLeftDrive.setDirection(DcMotor.Direction.REVERSE); // reverse og
+        frontRightDrive.setDirection(DcMotor.Direction.FORWARD); // forward
+        backRightDrive.setDirection(DcMotor.Direction.FORWARD); // forward
 
         //this is a thing in the Control Hub which determines the direction of the robot
         imu = hardwareMap.get(IMU.class, "imu");
@@ -143,14 +152,30 @@ public class AltMain extends LinearOpMode {
         telemetry.update();
 
         waitForStart();
+
+        // reset imu
+        imu.resetYaw();
         runtime.reset();
 
         while (opModeIsActive()) {
+            if (buffer) {
+                if (runtime.milliseconds() - prevBuffer >= bufferTime) {
+                    // reset buffer
+                    buffer = false;
+                    prevBuffer = 0;
+
+                    // move the claw down
+                    passoverServoLeft.setPosition(0);
+                    passoverServoRight.setPosition(0);
+                }
+            }
+
             double max;
             // don't question it. I don't know why it works like this. It just does.
-            double x = -gamepad1.left_stick_y;  // Note: pushing stick forward gives negative value
-            double y = gamepad1.left_stick_x; //x
-            double rx = gamepad1.right_stick_x; //rx
+            double y = -gamepad1.left_stick_y;  // Note: pushing stick forward gives negative value
+            double x = gamepad1.left_stick_x; //x
+            double rx = gamepad1.right_stick_x;//rx
+            double y2 = gamepad2.left_stick_y * .75 ;
 
             //will reset the direction of the robot relative of the position it is currently at
             if (gamepad1.options) {
@@ -160,8 +185,9 @@ public class AltMain extends LinearOpMode {
             double heading = imu.getRobotYawPitchRollAngles().getYaw(AngleUnit.RADIANS);
 
             //does math stuff to keep directions constant
-            double adjustedX = -y * Math.sin(heading) + x * Math.cos(heading);
-            double adjustedY =  y * Math.cos(heading) + x * Math.sin(heading);
+            // TODO: i swtiched the heading to -heading -- small hacks like these might prove an issue later down the road. please dedicate time to figure out the root cause
+            double adjustedX = y * Math.sin(heading) + x * Math.cos(heading);
+            double adjustedY =  y * Math.cos(heading) - x * Math.sin(heading);
 
             // Combine the joystick requests for each axis-motion to determine each wheel's power.
             // Set up a variable for each drive wheel to save the power level for telemetry.
@@ -177,7 +203,7 @@ public class AltMain extends LinearOpMode {
             max = Math.max(max, Math.abs(rightBackPower));
 
             //sets default speed
-            double default_power = 0.7;
+            double default_power = .95;
             double power = default_power;
 
             //slow mode
@@ -223,9 +249,10 @@ public class AltMain extends LinearOpMode {
 
             //close intake and open outtake
             if (gamepad2.right_trigger > 0) {
-                outtakeClawServo.setPosition(0.4);
+                outtakeClawServo.setPosition(0.35);
                 intakeClawServo.setPosition(0.15);
             }
+
 
 //            if (gamepad2.right_trigger > 0) {
 //                outtakeClawServo.setPosition(servoAngle(120));
@@ -235,11 +262,11 @@ public class AltMain extends LinearOpMode {
                 //open intake and close outtake
                 if (gamepad2.left_trigger > 0) {
                     outtakeClawServo.setPosition(0.15);
-                    intakeClawServo.setPosition(0.4);
+                    intakeClawServo.setPosition(0.35);
                 }
 //
 //            if (gamepad2.left_trigger > 0) {
-//                outtakeClawServo.setPosition(servoAngle(servoAngle(45)));
+//                outtakeClawServo.setPosition(servoAngle(45));
 //                intakeClawServo.setPosition(servoAngle(120));
 //            }
 
@@ -247,10 +274,14 @@ public class AltMain extends LinearOpMode {
             if (gamepad2.a) {
                 //SUBJECT TO CHANGE DUE TO MECHANICAL AND SERVO RANGE
                 //also set servo range to the specific rotation we need
-                horizontalSlideRight.setPosition(0.5);
-                horizontalSlideLeft.setPosition(0.5);
-                passoverServoLeft.setPosition(0.1);
-                passoverServoRight.setPosition(0.1);
+                horizontalSlideRight.setPosition(1);
+                horizontalSlideLeft.setPosition(1);
+
+                // TODO: passover too fast, gets stuck at the front before full extension
+                // for right now, move controls to diff button
+
+//                buffer = true; // set up the buffer
+//                prevBuffer = runtime.milliseconds();
             }
 
             // midway point
@@ -261,15 +292,26 @@ public class AltMain extends LinearOpMode {
 
             // retract
             if (gamepad2.b) {
-                horizontalSlideLeft.setPosition(0.3);
-                horizontalSlideRight.setPosition(0.3);
-                passoverServoRight.setPosition(0.8);
-                passoverServoLeft.setPosition(0.8);
+                horizontalSlideLeft.setPosition(0.2);
+                horizontalSlideRight.setPosition(0.2);
+//                passoverServoRight.setPosition(0.7);
+//                passoverServoLeft.setPosition(0.7);
             }
 
+            if (buttonSensor.getState() == false) {
+            passoverServoRight.setPosition(0.7);
+            passoverServoLeft.setPosition(0.7);
+            }
+
+            if (buttonSensor.getState() == true) {
+                passoverServoRight.setPosition(0);
+                passoverServoLeft.setPosition(0);
+            }
+
+
             if (gamepad2.x) {
-                outtakePositionServoLeft.setPosition(0.1);
-                outtakePositionServoRight.setPosition(0.1);
+                outtakePositionServoLeft.setPosition(.15);
+                outtakePositionServoRight.setPosition(.15);
             }
             if (gamepad2.y) {
                 outtakePositionServoLeft.setPosition(0.75);
@@ -278,35 +320,37 @@ public class AltMain extends LinearOpMode {
 
             //grabs specimen from wall
             if (gamepad2.right_bumper){
-                outtakePositionServoRight.setPosition(0.95);
-                outtakePositionServoLeft.setPosition(0.95);
+                outtakePositionServoRight.setPosition(0.97);
+                outtakePositionServoLeft.setPosition(0.97);
             }
 
 
 
             // todo:tune these positions since slides have changed height
-            if (gamepad2.dpad_up) {
-                //telling the motor to rotate one inch
-                positionTopOuttake();
-            }
-
-            if (gamepad2.dpad_right) {
-                positionMidOuttake();
-            }
-
-            if (gamepad2.dpad_down) {
-                resetOuttakeSlides();
-            }
-
-            if(gamepad2.dpad_left){
-                topChamber();
-            }
+//            if (gamepad2.dpad_up) {
+//                //telling the motor to rotate one inch
+//                positionTopOuttake();
+//            }
+//
+//            if (gamepad2.dpad_right) {
+//                positionMidOuttake();
+//            }
+//
+//            if (gamepad2.dpad_down) {
+//                resetOuttakeSlides();
+//            }
+//
+//            if(gamepad2.dpad_left){
+//                topChamber();
+//            }
+                motorLeftVert.setPower(y2);
+                motorRightVert.setPower(y2);
 
             /* This gives us data un parts of the robot we want
             A template to do this is:
             telementry.addDate("What you want the name of the data to show up as ", [mechanism you want to check].getCurrentPosition());
             Now some parts can very depending what you want
-            Now for example, you can get the power of a motor or continuous servo by using '.getCurrentPower'
+            Now for example, you can get the ticks of a motor or continuous servo by using '.getCurrentPosition'
                  */
             telemetry.addData("Status", "Run Time: " + runtime.toString());
             telemetry.addData("Front left/Right", "%4.2f, %4.2f", leftFrontPower, rightFrontPower);
@@ -349,6 +393,7 @@ public class AltMain extends LinearOpMode {
       return servoTarget;
     }
 
+
     /*
     These are objects which we can call in conditionals to do certain things
      */
@@ -361,7 +406,7 @@ public class AltMain extends LinearOpMode {
         motorLeftVert.setMode(DcMotor.RunMode.RUN_TO_POSITION);
         motorRightVert.setMode(DcMotor.RunMode.RUN_TO_POSITION);
 
-        motorLeftVert.setPower(0.8);
+        motorLeftVert.setPower(0.72);
         motorRightVert.setPower(0.7);
     }
 
@@ -374,7 +419,7 @@ public class AltMain extends LinearOpMode {
         motorLeftVert.setMode(DcMotor.RunMode.RUN_TO_POSITION);
         motorRightVert.setMode(DcMotor.RunMode.RUN_TO_POSITION);
 
-        motorLeftVert.setPower(0.8);
+        motorLeftVert.setPower(0.85);
         motorRightVert.setPower(0.8);
     }
 
@@ -401,7 +446,7 @@ public class AltMain extends LinearOpMode {
         motorRightVert.setTargetPosition((int)newTarget);
         motorLeftVert.setMode(DcMotor.RunMode.RUN_TO_POSITION);
         motorRightVert.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-        motorRightVert.setPower(0.4);
+        motorRightVert.setPower(0.52);
         motorLeftVert.setPower(0.5);
     }
 
@@ -413,13 +458,10 @@ public class AltMain extends LinearOpMode {
         motorLeftVert.setMode(DcMotor.RunMode.RUN_TO_POSITION);
         motorRightVert.setMode(DcMotor.RunMode.RUN_TO_POSITION);
 
-        motorLeftVert.setPower(0.5);
-        motorRightVert.setPower(0.4);
+        motorLeftVert.setPower(0.55);
+        motorRightVert.setPower(0.5);
     }
     public void resetHang() {
-//       motorHang.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-        /*wheelRevolution = 96mm = 3.78 inches if for wheels
-          wheelRevolution will equal inner diameter of spool if for linear spool */
         motorHang.setTargetPosition(0);
         motorHang.setMode(DcMotor.RunMode.RUN_TO_POSITION);
         motorHang.setPower(0.6);

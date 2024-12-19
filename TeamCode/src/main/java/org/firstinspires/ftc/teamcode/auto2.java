@@ -27,13 +27,12 @@ public class auto2 extends LinearOpMode {
 
         waitForStart();
 
+
+        //this is for any side on blue we get. 2 seconds is enough to travel to parking from any start position.
         while (opModeIsActive()) {
-            moveForward(0.7, 500);
-            stop();
-            turnRight(0.7, 1000);
-            stop();
-            moveForward(0.7, 2000);
-            stop();
+            moveForward(0.7, 2000); // for some reason this goes right, works for us idc
+
+
         }
 
     }
