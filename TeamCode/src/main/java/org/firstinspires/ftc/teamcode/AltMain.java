@@ -78,18 +78,22 @@ public class AltMain extends LinearOpMode {
     double wheelCircumference = 11.8737374;
     double spoolCircumference = 4.40945;
     double goBuildaMaxServoAngle = 300;
+    double axonServoMaxAngle = 355;
     double servoTarget;
     double newTarget;
     //These are negatives due to how the motors are facing
     double midBinHeightInches = -16;
-    double topBinHeightInches = -38;
+    double topBinHeightInches = -28;
     double midHangInches = -20;
     double topHangInches = -36;
-    double topChamber = -22;
+    double topChamber = -14;
+    double scoreSpecimen = -10;
     //toggleSwitch between Field Centric Drive to Robot Centric Drive
     boolean toggleSwitch = false;
+    //this starts off as false, which will leave us in basket mode, we can swap into specimen
+    boolean modeChange = false;
 
-    private final double bufferTime = 400; // seconds
+    private final double bufferTime = 400; // milliseconds
     private double prevBuffer = 0;
     private boolean buffer = false;
 
@@ -118,11 +122,15 @@ public class AltMain extends LinearOpMode {
         motorRightVert = hardwareMap.get(DcMotor.class, "exMotor1");
         motorHang = hardwareMap.get(DcMotor.class, "exMotor2");
 
+        motorLeftVert.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+        motorRightVert.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+
+
         buttonSensor = hardwareMap.get(DigitalChannel.class,"buttonSensor");
 
         //because we often have motors/servos in pairs facing opposite ways we have to reverse directions
         // so they turn in the same direction
-        horizontalSlideRight.setDirection(Servo.Direction.REVERSE); // this ain't a typo it supposed to be right idk why
+        horizontalSlideLeft.setDirection(Servo.Direction.REVERSE); // this ain't a typo it supposed to be right idk why
         passoverServoLeft.setDirection(Servo.Direction.REVERSE);
         motorRightVert.setDirection(DcMotorSimple.Direction.REVERSE);
         outtakePositionServoLeft.setDirection(Servo.Direction.REVERSE);
@@ -170,12 +178,16 @@ public class AltMain extends LinearOpMode {
                 }
             }
 
+            // stop the vertical linear slides if they are not busy
+            if (!motorLeftVert.isBusy()) motorLeftVert.setPower(0);
+            if (!motorRightVert.isBusy()) motorRightVert.setPower(0);
+
             double max;
             // don't question it. I don't know why it works like this. It just does.
             double y = -gamepad1.left_stick_y;  // Note: pushing stick forward gives negative value
             double x = gamepad1.left_stick_x; //x
             double rx = gamepad1.right_stick_x;//rx
-            double y2 = gamepad2.left_stick_y * .75 ;
+//            double y2 = gamepad2.left_stick_y * .75 ;
 
             //will reset the direction of the robot relative of the position it is currently at
             if (gamepad1.options) {
@@ -274,8 +286,10 @@ public class AltMain extends LinearOpMode {
             if (gamepad2.a) {
                 //SUBJECT TO CHANGE DUE TO MECHANICAL AND SERVO RANGE
                 //also set servo range to the specific rotation we need
-                horizontalSlideRight.setPosition(1);
-                horizontalSlideLeft.setPosition(1);
+                horizontalSlideRight.setPosition(axonServoAngle(160));
+                horizontalSlideLeft.setPosition(axonServoAngle(160));
+                passoverServoLeft.setPosition(0);
+                passoverServoRight.setPosition(0);
 
                 // TODO: passover too fast, gets stuck at the front before full extension
                 // for right now, move controls to diff button
@@ -292,26 +306,18 @@ public class AltMain extends LinearOpMode {
 
             // retract
             if (gamepad2.b) {
-                horizontalSlideLeft.setPosition(0.2);
-                horizontalSlideRight.setPosition(0.2);
-//                passoverServoRight.setPosition(0.7);
-//                passoverServoLeft.setPosition(0.7);
-            }
-
-            if (buttonSensor.getState() == false) {
-            passoverServoRight.setPosition(0.7);
-            passoverServoLeft.setPosition(0.7);
-            }
-
-            if (buttonSensor.getState() == true) {
-                passoverServoRight.setPosition(0);
-                passoverServoLeft.setPosition(0);
+                horizontalSlideLeft.setPosition(.17);
+                horizontalSlideRight.setPosition(.17);
+//                passoverServoRight.setPosition(0.8);
+//                passoverServoLeft.setPosition(0.8);
+                passoverServoRight.setPosition(axonServoAngle(225));
+                passoverServoLeft.setPosition(axonServoAngle(225));
             }
 
 
             if (gamepad2.x) {
-                outtakePositionServoLeft.setPosition(.15);
-                outtakePositionServoRight.setPosition(.15);
+                outtakePositionServoLeft.setPosition(.2);
+                outtakePositionServoRight.setPosition(.2);
             }
             if (gamepad2.y) {
                 outtakePositionServoLeft.setPosition(0.75);
@@ -324,27 +330,29 @@ public class AltMain extends LinearOpMode {
                 outtakePositionServoLeft.setPosition(0.97);
             }
 
-
-
             // todo:tune these positions since slides have changed height
-//            if (gamepad2.dpad_up) {
-//                //telling the motor to rotate one inch
-//                positionTopOuttake();
+            if (gamepad2.dpad_up) {
+                //telling the motor to rotate one inch
+                positionTopOuttake();
+            }
+
+            if (gamepad2.dpad_right) {
+                positionMidOuttake();
+            }
+
+            if (gamepad2.dpad_down) {
+                resetOuttakeSlides();
+            }
+
+
+            if(gamepad2.dpad_left){
+                scoreSpecimen();
+            }
+
+//            if(gamepad1.right_trigger > 0){
+//                scoreSpecimen();
 //            }
-//
-//            if (gamepad2.dpad_right) {
-//                positionMidOuttake();
-//            }
-//
-//            if (gamepad2.dpad_down) {
-//                resetOuttakeSlides();
-//            }
-//
-//            if(gamepad2.dpad_left){
-//                topChamber();
-//            }
-                motorLeftVert.setPower(y2);
-                motorRightVert.setPower(y2);
+
 
             /* This gives us data un parts of the robot we want
             A template to do this is:
@@ -388,11 +396,16 @@ public class AltMain extends LinearOpMode {
         return inches * ticksPerRotation / wheelCircumference;
     }
     //todo: integrate this into servo positions
-    private double servoAngle(double degree){
+    private double oldServoAngle(double degree){
       servoTarget = degree/goBuildaMaxServoAngle;
       return servoTarget;
     }
 
+    private double axonServoAngle(double degree){
+        servoTarget = degree/axonServoMaxAngle;
+
+        return servoTarget;
+    }
 
     /*
     These are objects which we can call in conditionals to do certain things
@@ -406,7 +419,7 @@ public class AltMain extends LinearOpMode {
         motorLeftVert.setMode(DcMotor.RunMode.RUN_TO_POSITION);
         motorRightVert.setMode(DcMotor.RunMode.RUN_TO_POSITION);
 
-        motorLeftVert.setPower(0.72);
+        motorLeftVert.setPower(0.7);
         motorRightVert.setPower(0.7);
     }
 
@@ -419,7 +432,7 @@ public class AltMain extends LinearOpMode {
         motorLeftVert.setMode(DcMotor.RunMode.RUN_TO_POSITION);
         motorRightVert.setMode(DcMotor.RunMode.RUN_TO_POSITION);
 
-        motorLeftVert.setPower(0.85);
+        motorLeftVert.setPower(0.8);
         motorRightVert.setPower(0.8);
     }
 
@@ -446,7 +459,17 @@ public class AltMain extends LinearOpMode {
         motorRightVert.setTargetPosition((int)newTarget);
         motorLeftVert.setMode(DcMotor.RunMode.RUN_TO_POSITION);
         motorRightVert.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-        motorRightVert.setPower(0.52);
+        motorRightVert.setPower(0.5);
+        motorLeftVert.setPower(0.5);
+    }
+
+    public void scoreSpecimen(){
+        newTarget = ticksToInchesSpool(scoreSpecimen);
+        motorLeftVert.setTargetPosition((int) newTarget);
+        motorRightVert.setTargetPosition((int)newTarget);
+        motorLeftVert.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+        motorRightVert.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+        motorRightVert.setPower(0.5);
         motorLeftVert.setPower(0.5);
     }
 
@@ -458,7 +481,7 @@ public class AltMain extends LinearOpMode {
         motorLeftVert.setMode(DcMotor.RunMode.RUN_TO_POSITION);
         motorRightVert.setMode(DcMotor.RunMode.RUN_TO_POSITION);
 
-        motorLeftVert.setPower(0.55);
+        motorLeftVert.setPower(0.5);
         motorRightVert.setPower(0.5);
     }
     public void resetHang() {

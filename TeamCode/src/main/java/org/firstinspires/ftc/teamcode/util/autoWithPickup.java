@@ -1,4 +1,4 @@
-package org.firstinspires.ftc.teamcode;
+package org.firstinspires.ftc.teamcode.util;
 
 
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
@@ -8,8 +8,8 @@ import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.hardware.IMU;
 import com.qualcomm.robotcore.hardware.Servo;
 
-@Autonomous (name = "Encoder")
-public class EncoderAutonomous extends LinearOpMode {
+@Autonomous (name = "Encoderpickup")
+public class autoWithPickup extends LinearOpMode {
     private DcMotor frontLeft;
     private DcMotor frontRight;
     private DcMotor backRight;
@@ -33,7 +33,7 @@ public class EncoderAutonomous extends LinearOpMode {
     double spoolCircumference = 4.40945;
     double newTarget;
     double midBinHeightInches = -16;
-    double topBinHeightInches = -27;
+    double topBinHeightInches = -28;
     double midHangInches = -20;
     double topHangInches = -36;
     double topChamber = -22;
@@ -67,9 +67,6 @@ public class EncoderAutonomous extends LinearOpMode {
         motorLeftVert.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
         motorRightVert.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
 
-        motorLeftVert.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-        motorRightVert.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-
         frontLeft.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
         frontRight.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
         backLeft.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
@@ -93,13 +90,13 @@ public class EncoderAutonomous extends LinearOpMode {
         horizontalSlideLeft.setPosition(0.2);
         horizontalSlideRight.setPosition(0.2);
 
-        forward(7, 0.3, 500);
-        strafeLeft(50.32, 0.3, 500);
-        turnRight(wheelCircumference, 0.3, 500); // idk change this shit later i cant do this rn
+        forward(7);
+        strafeLeft(49.32);
+        turnRight(wheelCircumference); // idk change this shit later i cant do this rn
 
         positionTopOuttake(); // also moves pivot
 
-        forward(-4.8, 0.3, 500);
+        forward(-4.5);
         // open claw
         outtakeClawServo.setPosition(0.35);
 
@@ -108,11 +105,39 @@ public class EncoderAutonomous extends LinearOpMode {
         outtakePositionServoRight.setPosition(0.15);
 
         resetOuttakeSlides();
-        // was turnLeft(wheelCircumference);
-        turnRight(-wheelCircumference, 0.3, 500);
 
-        strafeRight(130, 0.3, 500);
-        forward(-10, 0.3, 500);
+        turnLeft(wheelCircumference);
+
+        horizontalSlideRight.setPosition(1);
+        horizontalSlideLeft.setPosition(1);
+        passoverServoLeft.setPosition(0);
+        passoverServoRight.setPosition(0);
+        intakeClawServo.setPosition(.35);
+
+        strafeRight(3);
+
+        forward(5);
+        intakeClawServo.setPosition(.15);
+        forward(-5);
+
+        horizontalSlideRight.setPosition(.2);
+        horizontalSlideLeft.setPosition(.2);
+        passoverServoLeft.setPosition(0.8);
+        passoverServoRight.setPosition(0.8);
+
+        strafeRight(-3);
+        outtakePositionServoLeft.setPosition(.15);
+        outtakePositionServoRight.setPosition(.15);
+        turnRight(wheelCircumference);
+        outtakeClawServo.setPosition(0.15);
+        intakeClawServo.setPosition(0.35);
+        forward(-4.5);
+
+        positionTopOuttake();
+        outtakeClawServo.setPosition(0.35);
+
+        strafeRight(130);
+        forward(-10);
 
 
         /*
@@ -133,7 +158,13 @@ public class EncoderAutonomous extends LinearOpMode {
         return Math.abs(motor.getCurrentPosition()) >= Math.abs(motor.getTargetPosition());
     }
 
-    public void forward(double target, double p, long t){
+    public void horizontalExstension(double target){
+        newTarget = target;
+        horizontalSlideRight.setPosition(target);
+        horizontalSlideLeft.setPosition(target);
+    }
+
+    public void forward(double target){
         newTarget = inchesToTicksWheel(target);
 
         frontLeft.setTargetPosition((int)newTarget); // FLIP SIGN CUZ BUG
@@ -147,10 +178,10 @@ public class EncoderAutonomous extends LinearOpMode {
         backRight.setMode(DcMotor.RunMode.RUN_TO_POSITION);
 
         // FLIP POWER AS WELL
-        frontLeft.setPower(p);
-        frontRight.setPower(p);
-        backLeft.setPower(p);
-        backRight.setPower(p);
+        frontLeft.setPower(0.3);
+        frontRight.setPower(0.3);
+        backLeft.setPower(0.3);
+        backRight.setPower(0.3);
 
         while (frontLeft.isBusy() && frontRight.isBusy() && backLeft.isBusy() && backRight.isBusy()) { // add the rest later
 //            telemetry.addData("front left target position", frontLeft.getTargetPosition());
@@ -177,11 +208,9 @@ public class EncoderAutonomous extends LinearOpMode {
         frontRight.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
         backLeft.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
         backRight.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-
-        sleep(t);
     }
 
-    public void strafeLeft(double target, double p, long t) {
+    public void strafeLeft(double target) {
         newTarget = inchesToTicksWheel(target);
         frontLeft.setTargetPosition((int)-newTarget);
         frontRight.setTargetPosition((int)newTarget);
@@ -193,10 +222,10 @@ public class EncoderAutonomous extends LinearOpMode {
         backLeft.setMode(DcMotor.RunMode.RUN_TO_POSITION);
         backRight.setMode(DcMotor.RunMode.RUN_TO_POSITION);
 
-        frontLeft.setPower(p);
-        frontRight.setPower(p);
-        backLeft.setPower(p);
-        backRight.setPower(p);
+        frontLeft.setPower(0.7);
+        frontRight.setPower(0.7);
+        backLeft.setPower(0.7);
+        backRight.setPower(0.7);
 
         while (frontLeft.isBusy() && frontRight.isBusy() && backLeft.isBusy() && backRight.isBusy()) {}
 
@@ -209,11 +238,9 @@ public class EncoderAutonomous extends LinearOpMode {
         frontRight.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
         backLeft.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
         backRight.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-
-        sleep(t);
     }
 
-    public void strafeRight(double target, double p, long t) {
+    public void strafeRight(double target) {
         newTarget = inchesToTicksWheel(target);
 
         frontLeft.setTargetPosition((int)newTarget);
@@ -226,10 +253,10 @@ public class EncoderAutonomous extends LinearOpMode {
         backLeft.setMode(DcMotor.RunMode.RUN_TO_POSITION);
         backRight.setMode(DcMotor.RunMode.RUN_TO_POSITION);
 
-        frontLeft.setPower(p);
-        frontRight.setPower(p);
-        backLeft.setPower(p);
-        backRight.setPower(p);
+        frontLeft.setPower(0.7);
+        frontRight.setPower(0.7);
+        backLeft.setPower(0.7);
+        backRight.setPower(0.7);
 
         while (frontLeft.isBusy() && frontRight.isBusy() && backLeft.isBusy() && backRight.isBusy()) {}
 
@@ -242,11 +269,9 @@ public class EncoderAutonomous extends LinearOpMode {
         frontRight.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
         backLeft.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
         backRight.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-
-        sleep(t);
     }
 
-    public void turnRight(double target, double p, long t) {
+    public void turnRight(double target) {
         newTarget = inchesToTicksWheel(target);
 
         telemetry.addData("target", target);
@@ -263,10 +288,10 @@ public class EncoderAutonomous extends LinearOpMode {
         backLeft.setMode(DcMotor.RunMode.RUN_TO_POSITION);
         backRight.setMode(DcMotor.RunMode.RUN_TO_POSITION);
 
-        frontLeft.setPower(p);
-        frontRight.setPower(p);
-        backLeft.setPower(p);
-        backRight.setPower(p);
+        frontLeft.setPower(0.7);
+        frontRight.setPower(0.7);
+        backLeft.setPower(0.7);
+        backRight.setPower(0.7);
 
         while (frontLeft.isBusy() && frontRight.isBusy() && backLeft.isBusy() && backRight.isBusy()) {}
 
@@ -279,8 +304,6 @@ public class EncoderAutonomous extends LinearOpMode {
         frontRight.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
         backLeft.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
         backRight.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-
-        sleep(t);
     }
 
     public void turnLeft(double targetAngle){
