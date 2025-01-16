@@ -438,8 +438,8 @@ public class AltMain extends LinearOpMode {
         motorLeftVert.setMode(DcMotor.RunMode.RUN_TO_POSITION);
         motorRightVert.setMode(DcMotor.RunMode.RUN_TO_POSITION);
 
-        motorLeftVert.setPower(0.7);
-        motorRightVert.setPower(0.7);
+        motorLeftVert.setPower(0.8);
+        motorRightVert.setPower(0.8);
     }
 
     public void positionMidOuttake() {
@@ -500,8 +500,8 @@ public class AltMain extends LinearOpMode {
         motorLeftVert.setMode(DcMotor.RunMode.RUN_TO_POSITION);
         motorRightVert.setMode(DcMotor.RunMode.RUN_TO_POSITION);
 
-        motorLeftVert.setPower(0.5);
-        motorRightVert.setPower(0.5);
+        motorLeftVert.setPower(0.6);
+        motorRightVert.setPower(0.6);
     }
     public void resetHang() {
         motorHang.setTargetPosition(0);
