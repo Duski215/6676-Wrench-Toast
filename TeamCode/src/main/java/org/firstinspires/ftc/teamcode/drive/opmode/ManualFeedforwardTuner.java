@@ -19,7 +19,6 @@ import com.acmerobotics.roadrunner.profile.MotionState;
 import com.acmerobotics.roadrunner.util.NanoClock;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
-import com.qualcomm.robotcore.hardware.Servo;
 import com.qualcomm.robotcore.hardware.VoltageSensor;
 import com.qualcomm.robotcore.util.RobotLog;
 
@@ -61,9 +60,6 @@ public class ManualFeedforwardTuner extends LinearOpMode {
 
     private Mode mode;
 
-    public Servo horizontalSlideLeft;
-    public Servo horizontalSlideRight;
-
     private static MotionProfile generateProfile(boolean movingForward) {
         MotionState start = new MotionState(movingForward ? 0 : DISTANCE, 0, 0, 0);
         MotionState goal = new MotionState(movingForward ? DISTANCE : 0, 0, 0, 0);
@@ -76,9 +72,6 @@ public class ManualFeedforwardTuner extends LinearOpMode {
             RobotLog.setGlobalErrorMsg("Feedforward constants usually don't need to be tuned " +
                     "when using the built-in drive motor velocity PID.");
         }
-
-        horizontalSlideLeft = hardwareMap.get(Servo.class, "servo2");
-        horizontalSlideRight = hardwareMap.get(Servo.class, "servo3");
 
         Telemetry telemetry = new MultipleTelemetry(this.telemetry, dashboard.getTelemetry());
 
@@ -102,10 +95,8 @@ public class ManualFeedforwardTuner extends LinearOpMode {
         MotionProfile activeProfile = generateProfile(true);
         double profileStart = clock.seconds();
 
-        while (!isStopRequested()) {
-            horizontalSlideLeft.setPosition(0.2);
-            horizontalSlideRight.setPosition(0.2);
 
+        while (!isStopRequested()) {
             telemetry.addData("mode", mode);
 
             switch (mode) {
@@ -134,8 +125,6 @@ public class ManualFeedforwardTuner extends LinearOpMode {
 
                     Pose2d poseVelo = Objects.requireNonNull(drive.getPoseVelocity(), "poseVelocity() must not be null. Ensure that the getWheelVelocities() method has been overridden in your localizer.");
                     double currentVelo = poseVelo.getX();
-
-                    drive.getPoseEstimate();
 
                     List<Double> arr = drive.getWheelVelocities();
                      // leftFront, leftRear, rightRear, rightFront

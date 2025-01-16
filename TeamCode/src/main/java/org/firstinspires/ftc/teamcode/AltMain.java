@@ -96,6 +96,9 @@ public class AltMain extends LinearOpMode {
     private final double bufferTime = 400; // milliseconds
     private double prevBuffer = 0;
     private boolean buffer = false;
+    //previous servo position for leftPassover
+    double prevPositionLeft = 0;
+    double prevPositionRight = 0;
 
     @Override
     public void runOpMode() throws InterruptedException {
@@ -160,6 +163,11 @@ public class AltMain extends LinearOpMode {
         telemetry.update();
 
         waitForStart();
+
+        horizontalSlideLeft.setPosition(0);
+        horizontalSlideRight.setPosition(0);
+        outtakePositionServoLeft.setPosition(0.2);
+        outtakePositionServoRight.setPosition(0.2);
 
         // reset imu
         imu.resetYaw();
@@ -286,17 +294,21 @@ public class AltMain extends LinearOpMode {
             if (gamepad2.a) {
                 //SUBJECT TO CHANGE DUE TO MECHANICAL AND SERVO RANGE
                 //also set servo range to the specific rotation we need
-                horizontalSlideRight.setPosition(axonServoAngle(160));
-                horizontalSlideLeft.setPosition(axonServoAngle(160));
+                horizontalSlideRight.setPosition(axonServoAngle(58));
+                horizontalSlideLeft.setPosition(axonServoAngle(58));
                 passoverServoLeft.setPosition(0);
                 passoverServoRight.setPosition(0);
 
-                // TODO: passover too fast, gets stuck at the front before full extension
-                // for right now, move controls to diff button
-
-//                buffer = true; // set up the buffer
-//                prevBuffer = runtime.milliseconds();
             }
+
+            /*
+            This is a theoretical code for a differential claw
+            to rotate perpendicular
+                        if (gamepad2.smth) {
+                passoverServoLeft.setPosition(prevPositionLeft + axonServoAngle(90));
+                passoverServoRight.setPosition(prevPositionRight - axonServoAngle(90)); }
+
+             */
 
             // midway point
             if (gamepad1.a) {
@@ -306,8 +318,8 @@ public class AltMain extends LinearOpMode {
 
             // retract
             if (gamepad2.b) {
-                horizontalSlideLeft.setPosition(.17);
-                horizontalSlideRight.setPosition(.17);
+                horizontalSlideLeft.setPosition(axonServoAngle(0));
+                horizontalSlideRight.setPosition(axonServoAngle(0));
 //                passoverServoRight.setPosition(0.8);
 //                passoverServoLeft.setPosition(0.8);
                 passoverServoRight.setPosition(axonServoAngle(225));
@@ -315,14 +327,14 @@ public class AltMain extends LinearOpMode {
             }
 
 
-            if (gamepad2.x) {
-                outtakePositionServoLeft.setPosition(.2);
-                outtakePositionServoRight.setPosition(.2);
-            }
-            if (gamepad2.y) {
-                outtakePositionServoLeft.setPosition(0.75);
-                outtakePositionServoRight.setPosition(0.75);
-            }
+//            if (gamepad2.x) {
+//                outtakePositionServoLeft.setPosition(.2);
+//                outtakePositionServoRight.setPosition(.2);
+//            }
+//            if (gamepad2.y) {
+//                outtakePositionServoLeft.setPosition(0.75);
+//                outtakePositionServoRight.setPosition(0.75);
+//            }
 
             //grabs specimen from wall
             if (gamepad2.right_bumper){
@@ -334,14 +346,21 @@ public class AltMain extends LinearOpMode {
             if (gamepad2.dpad_up) {
                 //telling the motor to rotate one inch
                 positionTopOuttake();
+                outtakePositionServoLeft.setPosition(0.75);
+                outtakePositionServoRight.setPosition(0.75);
+
             }
 
             if (gamepad2.dpad_right) {
                 positionMidOuttake();
+                outtakePositionServoRight.setPosition(0.97);
+                outtakePositionServoLeft.setPosition(0.97);
             }
 
             if (gamepad2.dpad_down) {
                 resetOuttakeSlides();
+                outtakePositionServoLeft.setPosition(.2);
+                outtakePositionServoRight.setPosition(.2);
             }
 
 

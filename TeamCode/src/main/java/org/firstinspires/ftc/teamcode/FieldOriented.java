@@ -3,7 +3,6 @@ package org.firstinspires.ftc.teamcode;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.hardware.DcMotor;
-import com.qualcomm.robotcore.hardware.DcMotorEx;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.util.ElapsedTime;
 import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
@@ -49,10 +48,10 @@ public class FieldOriented extends LinearOpMode {
     Motor3 = Back_Right
      */
     private ElapsedTime runtime = new ElapsedTime();
-    private DcMotorEx frontLeftDrive = null;
-    private DcMotorEx backLeftDrive = null;
-    private DcMotorEx frontRightDrive = null;
-    private DcMotorEx backRightDrive = null;
+    private DcMotor frontLeftDrive = null;
+    private DcMotor backLeftDrive = null;
+    private DcMotor frontRightDrive = null;
+    private DcMotor backRightDrive = null;
     private IMU imu = null;
 
     //toggleSwitch between Field Centric Drive to Robot Centric Drive
@@ -60,10 +59,10 @@ public class FieldOriented extends LinearOpMode {
 
     @Override
     public void runOpMode() {
-        frontLeftDrive = hardwareMap.get(DcMotorEx.class, "motor0");
-        backLeftDrive = hardwareMap.get(DcMotorEx.class, "motor2");
-        frontRightDrive = hardwareMap.get(DcMotorEx.class, "motor1");
-        backRightDrive = hardwareMap.get(DcMotorEx.class, "motor3");
+        frontLeftDrive = hardwareMap.get(DcMotor.class, "motor0");
+        backLeftDrive = hardwareMap.get(DcMotor.class, "motor2");
+        frontRightDrive = hardwareMap.get(DcMotor.class, "motor1");
+        backRightDrive = hardwareMap.get(DcMotor.class, "motor3");
         // ########################################################################################
         // !!!            IMPORTANT Drive Information. Test your motor directions.            !!!!!
         // ########################################################################################
@@ -99,28 +98,9 @@ public class FieldOriented extends LinearOpMode {
         telemetry.update();
 
         waitForStart();
-
-        while (opModeIsActive()) {
-            double y = -gamepad1.left_stick_y;  // Note: pushing stick forward gives negative value
-            double x = gamepad1.left_stick_x; //x
-            double rx = gamepad1.right_stick_x;//rx
-
-            double leftFrontPower = gamepad1.a ? 1 : 0;
-            double rightFrontPower = gamepad1.b ? 1 : 0;
-            double leftBackPower = gamepad1.x ? 1 : 0;
-            double rightBackPower = gamepad1.y ? 1 : 0;
-
-            frontLeftDrive.setPower(leftFrontPower);
-            frontRightDrive.setPower(rightFrontPower);
-            backLeftDrive.setPower(leftBackPower);
-            backRightDrive.setPower(rightBackPower);
-
-            telemetry.addData("leftFront", frontLeftDrive.getVelocity());
-            telemetry.addData("rightFront", frontRightDrive.getVelocity());
-            telemetry.addData("leftBack", backLeftDrive.getVelocity());
-            telemetry.addData("rightBack", backRightDrive.getVelocity());
-
-            telemetry.update();
-        }
+        frontRightDrive.setPower(1);
+        frontLeftDrive.setPower(1);
+        backRightDrive.setPower(1);
+        backRightDrive.setPower(1);
     }
 }

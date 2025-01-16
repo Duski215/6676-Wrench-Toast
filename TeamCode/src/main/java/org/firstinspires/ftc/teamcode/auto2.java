@@ -15,8 +15,8 @@ public class auto2 extends LinearOpMode {
     @Override
     public void runOpMode()  {
         frontLeft = hardwareMap.get(DcMotor.class, "motor0");
-        backLeft = hardwareMap.get(DcMotor.class, "motor2");
-        frontRight = hardwareMap.get(DcMotor.class, "motor1");
+        frontRight = hardwareMap.get(DcMotor.class, "motor2");
+        backLeft = hardwareMap.get(DcMotor.class, "motor1");
         backRight = hardwareMap.get(DcMotor.class, "motor3");
 
         // set correct motor direction
@@ -27,74 +27,30 @@ public class auto2 extends LinearOpMode {
 
         waitForStart();
 
-        //this is for any side on blue we get. 2 seconds is enough to travel to parking from any start position.
 
-        moveForward(0.5, 500); // for some reason this goes right, works for us idc
-        strafeLeft(0.5, 1500);
+        //this is for any side on blue we get. 2 seconds is enough to travel to parking from any start position.
+        while (opModeIsActive()) {
+            moveForward(0.7, 2000); // for some reason this goes right, works for us idc
+
+
+        }
+
     }
 
-    public void moveForward(double power, long time) {   //goes right
+    public void moveForward(double power, long time) {
         frontLeft.setPower(power);
         frontRight.setPower(power);
         backLeft.setPower(power);
         backRight.setPower(power);
         sleep(time);
 
-        frontLeft.setPower(0);
-        frontRight.setPower(0);
-        backLeft.setPower(0);
-        backRight.setPower(0);
     }
 
     public void turnRight(double power, long time) {
         frontLeft.setPower(power);
         frontRight.setPower(-power);
-        backLeft.setPower(power);
-        backRight.setPower(-power);
-        sleep(time);
-
-        frontLeft.setPower(0);
-        frontRight.setPower(0);
-        backLeft.setPower(0);
-        backRight.setPower(0);
-    }
-
-    public void turnleft(double power, long time) {
-        frontLeft.setPower(-power);
-        frontRight.setPower(-power);
-        backLeft.setPower(-power);
-        backRight.setPower(-power);
-        sleep(time);
-
-        frontLeft.setPower(0);
-        frontRight.setPower(0);
-        backLeft.setPower(0);
-        backRight.setPower(0);
-    }
-
-    public void strafeRight(double power, long time) {
-        frontLeft.setPower(power);
-        frontRight.setPower(-power);
         backLeft.setPower(-power);
         backRight.setPower(power);
         sleep(time);
-
-        frontLeft.setPower(0);
-        frontRight.setPower(0);
-        backLeft.setPower(0);
-        backRight.setPower(0);
-    }
-
-    public void strafeLeft(double power, long time) {
-        frontLeft.setPower(-power);
-        frontRight.setPower(power);
-        backLeft.setPower(power);
-        backRight.setPower(-power);
-        sleep(time);
-
-        frontLeft.setPower(0);
-        frontRight.setPower(0);
-        backLeft.setPower(0);
-        backRight.setPower(0);
     }
 }
