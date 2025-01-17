@@ -58,7 +58,7 @@ public class SampleMecanumDrive extends MecanumDrive {
     public static PIDCoefficients TRANSLATIONAL_PID = new PIDCoefficients(0, 0, 0);
     public static PIDCoefficients HEADING_PID = new PIDCoefficients(0, 0, 0);
 
-    public static double LATERAL_MULTIPLIER = 1;
+    public static double LATERAL_MULTIPLIER = 1.0435;
 
     public static double VX_WEIGHT = 1;
     public static double VY_WEIGHT = 1;
@@ -276,14 +276,10 @@ public class SampleMecanumDrive extends MecanumDrive {
         lastEncVels.clear();
 
         List<Double> wheelVelocities = new ArrayList<>();
-        Integer n = 0;
         for (DcMotorEx motor : motors) {
             int vel = (int) motor.getVelocity();
-            // NOTE: SWITCHED BOTH FRONT WHEEL VELOCITIES. WEIRD BUG THAT I DONT WANT TO FIX
-            vel = n == 0 || n == 3 ? -vel : vel;
             lastEncVels.add(vel);
             wheelVelocities.add(encoderTicksToInches(vel));
-            n += 1;
         }
         return wheelVelocities;
     }
