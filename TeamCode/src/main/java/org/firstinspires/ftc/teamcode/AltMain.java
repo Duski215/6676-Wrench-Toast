@@ -134,7 +134,7 @@ public class AltMain extends LinearOpMode {
         //because we often have motors/servos in pairs facing opposite ways we have to reverse directions
         // so they turn in the same direction
         horizontalSlideLeft.setDirection(Servo.Direction.REVERSE); // this ain't a typo it supposed to be right idk why
-        passoverServoLeft.setDirection(Servo.Direction.REVERSE);
+        passoverServoRight.setDirection(Servo.Direction.REVERSE);
         motorRightVert.setDirection(DcMotorSimple.Direction.REVERSE);
         outtakePositionServoLeft.setDirection(Servo.Direction.REVERSE);
         // reset encoders
@@ -172,6 +172,7 @@ public class AltMain extends LinearOpMode {
         // reset imu
         imu.resetYaw();
         runtime.reset();
+
 
         while (opModeIsActive()) {
             if (buffer) {
@@ -296,36 +297,28 @@ public class AltMain extends LinearOpMode {
                 //also set servo range to the specific rotation we need
                 horizontalSlideRight.setPosition(axonServoAngle(58));
                 horizontalSlideLeft.setPosition(axonServoAngle(58));
-                passoverServoLeft.setPosition(0);
-                passoverServoRight.setPosition(0);
+                passoverServoLeft.setPosition(axonServoAngle(225));
+                passoverServoRight.setPosition(axonServoAngle(225));
 
             }
-
-            /*
-            This is a theoretical code for a differential claw
-            to rotate perpendicular
-                        if (gamepad2.smth) {
-                passoverServoLeft.setPosition(prevPositionLeft + axonServoAngle(90));
-                passoverServoRight.setPosition(prevPositionRight - axonServoAngle(90)); }
-
-             */
-
-            // midway point
-            if (gamepad1.a) {
-                horizontalSlideRight.setPosition(0.4);
-                horizontalSlideLeft.setPosition(0.4);
+            //pivot
+            if (gamepad2.y){
+                passoverServoRight.setPosition(axonServoAngle(315));
+                passoverServoLeft.setPosition(axonServoAngle(135));
             }
-
-            // retract
-            if (gamepad2.b) {
-                horizontalSlideLeft.setPosition(axonServoAngle(0));
-                horizontalSlideRight.setPosition(axonServoAngle(0));
-//                passoverServoRight.setPosition(0.8);
-//                passoverServoLeft.setPosition(0.8);
+            //unpivot
+            if (gamepad2.x){
                 passoverServoRight.setPosition(axonServoAngle(225));
                 passoverServoLeft.setPosition(axonServoAngle(225));
             }
-
+            
+            // retract
+            if (gamepad2.b ) {
+                horizontalSlideLeft.setPosition(axonServoAngle(0));
+                horizontalSlideRight.setPosition(axonServoAngle(0));
+                passoverServoRight.setPosition(axonServoAngle(0));
+                passoverServoLeft.setPosition(axonServoAngle(0));
+            }
 
 //            if (gamepad2.x) {
 //                outtakePositionServoLeft.setPosition(.2);
@@ -425,7 +418,6 @@ public class AltMain extends LinearOpMode {
 
         return servoTarget;
     }
-
     /*
     These are objects which we can call in conditionals to do certain things
      */
@@ -441,6 +433,8 @@ public class AltMain extends LinearOpMode {
         motorLeftVert.setPower(0.8);
         motorRightVert.setPower(0.8);
     }
+
+
 
     public void positionMidOuttake() {
         newTarget = ticksToInchesSpool(midBinHeightInches);
