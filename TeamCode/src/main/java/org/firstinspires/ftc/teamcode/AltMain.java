@@ -2,18 +2,27 @@ package org.firstinspires.ftc.teamcode;
 
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
-import com.qualcomm.robotcore.hardware.AnalogInput;
-import com.qualcomm.robotcore.hardware.AnalogSensor;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DigitalChannel;
 import com.qualcomm.robotcore.hardware.Servo;
-import com.qualcomm.robotcore.hardware.TouchSensor;
 import com.qualcomm.robotcore.util.ElapsedTime;
 import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
 
 import com.qualcomm.hardware.rev.RevHubOrientationOnRobot;
 import com.qualcomm.robotcore.hardware.IMU;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
+
+//Camera stuff
+import org.firstinspires.ftc.robotcore.external.hardware.camera.WebcamName;
+import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
+import org.firstinspires.ftc.robotcore.external.navigation.Position;
+import org.firstinspires.ftc.robotcore.external.navigation.YawPitchRollAngles;
+import org.firstinspires.ftc.vision.VisionPortal;
+import org.firstinspires.ftc.vision.apriltag.AprilTagDetection;
+import org.firstinspires.ftc.vision.apriltag.AprilTagGameDatabase;
+import org.firstinspires.ftc.vision.apriltag.AprilTagProcessor;
+
+import java.util.List;
 
 /*
  * This file contains an example of a Linear "OpMode".
@@ -45,6 +54,19 @@ import com.qualcomm.robotcore.hardware.DcMotorSimple;
 
 @TeleOp(name="Alt Main", group="Linear OpMode")
 public class AltMain extends LinearOpMode {
+    // NOTE: if XYZ values are (0, 0, 0), then that means all the camera is at the dead center of the robot.
+    // find all distances from the *center of the robot (the height of the "center" of the robot is
+    // 0 --- just measure the height of the camera off the ground. define the "center" of the robot
+    // xy coordinates, then offset it to find the camera position
+
+    // measure this before you start with the camera
+    private Position cameraPosition = new Position(DistanceUnit.INCH, -5, 0, 4, 0); //ADJUST THESE
+
+    // if all values are zero (no rotation), that implies the camera is pointing straight up.
+    private YawPitchRollAngles cameraOrientation = new YawPitchRollAngles(AngleUnit.DEGREES, 0, -90, 0, 0);// AND MAYBE THESE
+
+    private AprilTagProcessor aprilTag;
+    private VisionPortal visionPortal;
 
     // Declare OpMode members for each of the 4 motors.
     /*
@@ -96,9 +118,8 @@ public class AltMain extends LinearOpMode {
     private final double bufferTime = 400; // milliseconds
     private double prevBuffer = 0;
     private boolean buffer = false;
-    //previous servo position for leftPassover
-    double prevPositionLeft = 0;
-    double prevPositionRight = 0;
+
+    CameraTesting camera = new CameraTesting();
 
     @Override
     public void runOpMode() throws InterruptedException {
@@ -116,10 +137,10 @@ public class AltMain extends LinearOpMode {
         horizontalSlideRight = hardwareMap.get(Servo.class, "servo3");
 
         passoverServoLeft = hardwareMap.get(Servo.class, "exPassoverServo4");
-        passoverServoRight = hardwareMap.get(Servo.class,"exPassoverServo5");
+        passoverServoRight = hardwareMap.get(Servo.class, "exPassoverServo5");
 
-        outtakePositionServoLeft = hardwareMap.get(Servo.class,"servo4");
-        outtakePositionServoRight = hardwareMap.get(Servo.class,"servo5");
+        outtakePositionServoLeft = hardwareMap.get(Servo.class, "servo4");
+        outtakePositionServoRight = hardwareMap.get(Servo.class, "servo5");
 
         motorLeftVert = hardwareMap.get(DcMotor.class, "exMotor0");
         motorRightVert = hardwareMap.get(DcMotor.class, "exMotor1");
@@ -129,7 +150,7 @@ public class AltMain extends LinearOpMode {
         motorRightVert.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
 
 
-        buttonSensor = hardwareMap.get(DigitalChannel.class,"buttonSensor");
+        buttonSensor = hardwareMap.get(DigitalChannel.class, "buttonSensor");
 
         //because we often have motors/servos in pairs facing opposite ways we have to reverse directions
         // so they turn in the same direction
@@ -156,18 +177,26 @@ public class AltMain extends LinearOpMode {
                 RevHubOrientationOnRobot.UsbFacingDirection.FORWARD
         ));
 
+
         imu.initialize(parameters);
+        initAprilTag();
+
+        // Wait for the DS start button to be touched.
+        telemetry.addData("DS preview on/off", "3 dots, Camera Stream");
+        telemetry.addData(">", "Touch START to start OpMode");
+        telemetry.update();
 
         // Wait for the game to start (driver presses START)
         telemetry.addData("Status", "Initialized");
         telemetry.update();
 
+
         waitForStart();
 
-        horizontalSlideLeft.setPosition(0);
-        horizontalSlideRight.setPosition(0);
-        outtakePositionServoLeft.setPosition(0.2);
-        outtakePositionServoRight.setPosition(0.2);
+//        horizontalSlideLeft.setPosition(axonServoAngle(0));
+//        horizontalSlideRight.setPosition(axonServoAngle(0));
+//        outtakePositionServoLeft.setPosition(0.17);
+//        outtakePositionServoRight.setPosition(0.17);
 
         // reset imu
         imu.resetYaw();
@@ -175,6 +204,12 @@ public class AltMain extends LinearOpMode {
 
 
         while (opModeIsActive()) {
+
+            telemetryAprilTag();
+            // Push telemetry to the Driver Station.
+            telemetry.update();
+
+
             if (buffer) {
                 if (runtime.milliseconds() - prevBuffer >= bufferTime) {
                     // reset buffer
@@ -208,7 +243,7 @@ public class AltMain extends LinearOpMode {
             //does math stuff to keep directions constant
             // TODO: i swtiched the heading to -heading -- small hacks like these might prove an issue later down the road. please dedicate time to figure out the root cause
             double adjustedX = y * Math.sin(heading) + x * Math.cos(heading);
-            double adjustedY =  y * Math.cos(heading) - x * Math.sin(heading);
+            double adjustedY = y * Math.cos(heading) - x * Math.sin(heading);
 
             // Combine the joystick requests for each axis-motion to determine each wheel's power.
             // Set up a variable for each drive wheel to save the power level for telemetry.
@@ -280,11 +315,11 @@ public class AltMain extends LinearOpMode {
 //                intakeClawServo.setPosition(servoAngle(45));
 //            }
 
-                //open intake and close outtake
-                if (gamepad2.left_trigger > 0) {
-                    outtakeClawServo.setPosition(0.15);
-                    intakeClawServo.setPosition(0.35);
-                }
+            //open intake and close outtake
+            if (gamepad2.left_trigger > 0) {
+                outtakeClawServo.setPosition(0.15);
+                intakeClawServo.setPosition(0.35);
+            }
 //
 //            if (gamepad2.left_trigger > 0) {
 //                outtakeClawServo.setPosition(servoAngle(45));
@@ -295,25 +330,25 @@ public class AltMain extends LinearOpMode {
             if (gamepad2.a) {
                 //SUBJECT TO CHANGE DUE TO MECHANICAL AND SERVO RANGE
                 //also set servo range to the specific rotation we need
-                horizontalSlideRight.setPosition(axonServoAngle(58));
-                horizontalSlideLeft.setPosition(axonServoAngle(58));
-                passoverServoLeft.setPosition(axonServoAngle(225));
-                passoverServoRight.setPosition(axonServoAngle(225));
+                horizontalSlideRight.setPosition(axonServoAngle(50));
+                horizontalSlideLeft.setPosition(axonServoAngle(50));
+                passoverServoLeft.setPosition(axonServoAngle(228));
+                passoverServoRight.setPosition(axonServoAngle(228));
 
             }
             //pivot
-            if (gamepad2.y){
+            if (gamepad2.y) {
                 passoverServoRight.setPosition(axonServoAngle(315));
                 passoverServoLeft.setPosition(axonServoAngle(135));
             }
             //unpivot
-            if (gamepad2.x){
-                passoverServoRight.setPosition(axonServoAngle(225));
-                passoverServoLeft.setPosition(axonServoAngle(225));
+            if (gamepad2.x) {
+                passoverServoRight.setPosition(axonServoAngle(228));
+                passoverServoLeft.setPosition(axonServoAngle(228));
             }
-            
+
             // retract
-            if (gamepad2.b ) {
+            if (gamepad2.b) {
                 horizontalSlideLeft.setPosition(axonServoAngle(0));
                 horizontalSlideRight.setPosition(axonServoAngle(0));
                 passoverServoRight.setPosition(axonServoAngle(0));
@@ -330,7 +365,7 @@ public class AltMain extends LinearOpMode {
 //            }
 
             //grabs specimen from wall
-            if (gamepad2.right_bumper){
+            if (gamepad2.right_bumper) {
                 outtakePositionServoRight.setPosition(0.97);
                 outtakePositionServoLeft.setPosition(0.97);
             }
@@ -352,18 +387,15 @@ public class AltMain extends LinearOpMode {
 
             if (gamepad2.dpad_down) {
                 resetOuttakeSlides();
-                outtakePositionServoLeft.setPosition(.2);
-                outtakePositionServoRight.setPosition(.2);
+                outtakePositionServoLeft.setPosition(.16);
+                outtakePositionServoRight.setPosition(.16);
             }
 
 
-            if(gamepad2.dpad_left){
+            if (gamepad2.dpad_left) {
                 scoreSpecimen();
             }
 
-//            if(gamepad1.right_trigger > 0){
-//                scoreSpecimen();
-//            }
 
 
             /* This gives us data un parts of the robot we want
@@ -380,6 +412,8 @@ public class AltMain extends LinearOpMode {
 //            telemetry.addData("Servo position", servoAngle(servoTarget));
             telemetry.update();
         }
+        visionPortal.close();
+        // saves CPU
     }
     /*everything below is considered an object. It is basically something you can give qualities to
     Like a variables but can be multi-detailed. These objects can return values.
@@ -407,17 +441,19 @@ public class AltMain extends LinearOpMode {
     private double ticksToInchesWheel(double inches) {
         return inches * ticksPerRotation / wheelCircumference;
     }
+
     //todo: integrate this into servo positions
-    private double oldServoAngle(double degree){
-      servoTarget = degree/goBuildaMaxServoAngle;
-      return servoTarget;
+    private double oldServoAngle(double degree) {
+        servoTarget = degree / goBuildaMaxServoAngle;
+        return servoTarget;
     }
 
-    private double axonServoAngle(double degree){
-        servoTarget = degree/axonServoMaxAngle;
+    private double axonServoAngle(double degree) {
+        servoTarget = degree / axonServoMaxAngle;
 
         return servoTarget;
     }
+
     /*
     These are objects which we can call in conditionals to do certain things
      */
@@ -433,7 +469,6 @@ public class AltMain extends LinearOpMode {
         motorLeftVert.setPower(0.8);
         motorRightVert.setPower(0.8);
     }
-
 
 
     public void positionMidOuttake() {
@@ -469,17 +504,17 @@ public class AltMain extends LinearOpMode {
     public void topChamber() {
         newTarget = ticksToInchesSpool(topChamber);
         motorLeftVert.setTargetPosition((int) newTarget);
-        motorRightVert.setTargetPosition((int)newTarget);
+        motorRightVert.setTargetPosition((int) newTarget);
         motorLeftVert.setMode(DcMotor.RunMode.RUN_TO_POSITION);
         motorRightVert.setMode(DcMotor.RunMode.RUN_TO_POSITION);
         motorRightVert.setPower(0.5);
         motorLeftVert.setPower(0.5);
     }
 
-    public void scoreSpecimen(){
+    public void scoreSpecimen() {
         newTarget = ticksToInchesSpool(scoreSpecimen);
         motorLeftVert.setTargetPosition((int) newTarget);
-        motorRightVert.setTargetPosition((int)newTarget);
+        motorRightVert.setTargetPosition((int) newTarget);
         motorLeftVert.setMode(DcMotor.RunMode.RUN_TO_POSITION);
         motorRightVert.setMode(DcMotor.RunMode.RUN_TO_POSITION);
         motorRightVert.setPower(0.5);
@@ -497,10 +532,89 @@ public class AltMain extends LinearOpMode {
         motorLeftVert.setPower(0.6);
         motorRightVert.setPower(0.6);
     }
+
     public void resetHang() {
         motorHang.setTargetPosition(0);
         motorHang.setMode(DcMotor.RunMode.RUN_TO_POSITION);
         motorHang.setPower(0.6);
     }
 
+    private void initAprilTag() {
+        // Create the AprilTag processor.
+        aprilTag = new AprilTagProcessor.Builder()
+
+                // The following default settings are available to un-comment and edit as needed.
+                //.setDrawAxes(false)
+                //.setDrawCubeProjection(false)
+                //.setDrawTagOutline(true)
+//                .setTagFamily(AprilTagProcessor.TagFamily.TAG_36h11)
+                .setTagLibrary(AprilTagGameDatabase.getIntoTheDeepTagLibrary())
+                .setOutputUnits(DistanceUnit.INCH, AngleUnit.DEGREES)
+                .setCameraPose(cameraPosition, cameraOrientation)
+
+                // == CAMERA CALIBRATION ==
+                // If you do not manually specify calibration parameters, the SDK will attempt
+                // to load a predefined calibration for your camera.
+                //.setLensIntrinsics(578.272, 578.272, 402.145, 221.506)
+                // ... these parameters are fx, fy, cx, cy.
+
+                .build();
+        // Decimation = 1 ..  Detect 2" Tag from 10 feet away at 10 Frames per second
+        // Decimation = 2 ..  Detect 2" Tag from 6  feet away at 22 Frames per second
+        // Decimation = 3 ..  Detect 2" Tag from 4  feet away at 30 Frames Per Second (default)
+        // Decimation = 3 ..  Detect 5" Tag from 10 feet away at 30 Frames Per Second (default)
+        aprilTag.setDecimation(3);
+
+        // Create the vision portal by using a builder.
+        VisionPortal.Builder builder = new VisionPortal.Builder();
+
+        builder.setCamera(hardwareMap.get(WebcamName.class, "Webcam 1"));
+
+        // Choose a camera resolution. Not all cameras support all resolutions.
+        //builder.setCameraResolution(new Size(640, 480));
+
+        // Enable the RC preview (LiveView).  Set "false" to omit camera monitoring.
+        //builder.enableLiveView(true);
+
+        // Set the stream format; MJPEG uses less bandwidth than default YUY2.
+        //builder.setStreamFormat(VisionPortal.StreamFormat.YUY2);
+
+        // Choose whether or not LiveView stops if no processors are enabled.
+        // If set "true", monitor shows solid orange screen if no processors enabled.
+        // If set "false", monitor shows camera view without annotations.
+        //builder.setAutoStopLiveView(false);
+
+        // Set and enable the processor.
+        builder.addProcessor(aprilTag);
+
+        // Build the Vision Portal, using the above settings.
+        visionPortal = builder.build();
+
+        // Disable or re-enable the aprilTag processor at any time.
+        visionPortal.setProcessorEnabled(aprilTag, true);
+    }
+
+    private void telemetryAprilTag() {
+
+        List<AprilTagDetection> currentDetections = aprilTag.getDetections();
+        telemetry.addData("# AprilTags Detected", currentDetections.size());
+
+        // Step through the list of detections and display info for each one.
+        for (AprilTagDetection detection : currentDetections) {
+            if (detection.metadata != null) {
+                telemetry.addLine(String.format("\n==== (ID %d) %s", detection.id, detection.metadata.name));
+                telemetry.addLine(String.format("XYZ %6.1f %6.1f %6.1f  (inch)",
+                        detection.robotPose.getPosition().x,
+                        detection.robotPose.getPosition().y,
+                        detection.robotPose.getPosition().z));
+                telemetry.addLine(String.format("PRY %6.1f %6.1f %6.1f  (deg)",
+                        detection.robotPose.getOrientation().getPitch(AngleUnit.DEGREES),
+                        detection.robotPose.getOrientation().getRoll(AngleUnit.DEGREES),
+                        detection.robotPose.getOrientation().getYaw(AngleUnit.DEGREES)));
+            } else {
+                telemetry.addLine(String.format("\n==== (ID %d) Unknown", detection.id));
+                telemetry.addLine(String.format("Center %6.0f %6.0f   (pixels)", detection.center.x, detection.center.y));
+            }
+        }   // end for() loop
+    }
 }
