@@ -149,7 +149,6 @@ public class AltMain extends LinearOpMode {
         motorLeftVert.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
         motorRightVert.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
 
-
         buttonSensor = hardwareMap.get(DigitalChannel.class, "buttonSensor");
 
         //because we often have motors/servos in pairs facing opposite ways we have to reverse directions
@@ -159,8 +158,11 @@ public class AltMain extends LinearOpMode {
         motorRightVert.setDirection(DcMotorSimple.Direction.REVERSE);
         outtakePositionServoLeft.setDirection(Servo.Direction.REVERSE);
         // reset encoders
-//        motorLeftVert.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-//        motorRightVert.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        motorLeftVert.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+        motorRightVert.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+        motorLeftVert.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        motorRightVert.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+
         motorHang.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
 
         // set correct motor direction
@@ -201,7 +203,6 @@ public class AltMain extends LinearOpMode {
         // reset imu
         imu.resetYaw();
         runtime.reset();
-
 
         while (opModeIsActive()) {
 
@@ -370,13 +371,11 @@ public class AltMain extends LinearOpMode {
                 outtakePositionServoLeft.setPosition(0.97);
             }
 
-            // todo:tune these positions since slides have changed height
             if (gamepad2.dpad_up) {
                 //telling the motor to rotate one inch
                 positionTopOuttake();
                 outtakePositionServoLeft.setPosition(0.75);
                 outtakePositionServoRight.setPosition(0.75);
-
             }
 
             if (gamepad2.dpad_right) {
@@ -469,7 +468,6 @@ public class AltMain extends LinearOpMode {
         motorLeftVert.setPower(0.8);
         motorRightVert.setPower(0.8);
     }
-
 
     public void positionMidOuttake() {
         newTarget = ticksToInchesSpool(midBinHeightInches);
