@@ -1,128 +1,96 @@
 package org.firstinspires.ftc.teamcode;
-/*
-notes:
-make complete automation during teleop, back and forth
- */
 
-import com.qualcomm.hardware.rev.RevHubOrientationOnRobot;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
-import com.qualcomm.robotcore.hardware.CRServo;
-import com.qualcomm.robotcore.hardware.DcMotor;
-import com.qualcomm.robotcore.hardware.DcMotorSimple;
-import com.qualcomm.robotcore.hardware.IMU;
-import com.qualcomm.robotcore.hardware.Servo;
-import com.qualcomm.robotcore.util.ElapsedTime;
+
 import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
 
-@TeleOp(name="Main Drive")
+/*
+ * This file contains an example of a Linear "OpMode".
+ * An OpMode is a 'program' that runs in either the autonomous or the teleop period of an FTC match.
+ * The names of OpModes appear on the menu of the FTC Driver Station.
+ * When a selection is made from the menu, the corresponding OpMode is executed.
+ *
+ * This particular OpMode illustrates driving a 4-motor Omni-Directional (or Holonomic) robot.
+ * This code will work with either a Mecanum-Drive or an X-Drive train.
+ * Both of these drives are illustrated at https://gm0.org/en/latest/docs/robot-design/drivetrains/holonomic.html
+ * Note that a Mecanum drive must display an X roller-pattern when viewed from above.
+ *
+ * Also note that it is critical to set the correct rotation direction for each motor.  See details below.
+ *
+ * Holonomic drives provide the ability for the robot to move in three axes (directions) simultaneously.
+ * Each motion axis is controlled by one Joystick axis.
+ *
+ * 1) Axial:    Driving forward and backward               Left-joystick Forward/Backward
+ * 2) Lateral:  Strafing right and left                     Left-joystick Right and Left
+ * 3) Yaw:      Rotating Clockwise and counter clockwise    Right-joystick Right and Left
+ *
+ * This code is written assuming that the right-side motors need to be reversed for the robot to drive forward.
+ * When you first test your robot, if it moves backward when you push the left stick forward, then you must flip
+ * the direction of all 4 motors (see code below).
+ *
+ * Use Android Studio to Copy this Class, and Paste it into your team's code folder with a new name.
+ * Remove or comment out the @Disabled line to add this OpMode to the Driver Station OpMode list
+ */
+
+@TeleOp(name="Main Drive", group="Linear OpMode")
 public class MainDrive extends LinearOpMode {
-    private ElapsedTime runtime = new ElapsedTime();
-    private DcMotor frontLeftDrive;
-    private DcMotor backLeftDrive;
-    private DcMotor backRightDrive;
-    private DcMotor frontRightDrive;
-    private IMU imu = null;
-//    private CRServo intakeServoLeft;
-//    private CRServo intakeServoRight;
-//    private Servo horizontalSlideLeft;
-//    private Servo horizontalSlideRight;
-//    private Servo passoverServoLeft;
-//    private Servo passoverServoRight;
-//    private DcMotor motorLeftVert;
-//    private DcMotor motorRightVert;
-//    private Servo outtakeServoLeft;
-//    private Servo outtakeServoRight;
-//    private Servo gateServo;
-//    private DcMotor motorHang;
-
-
-//    //toggleSwitch between Field Centric Drive to Robot Centric Drive
-//    boolean toggleSwitch = false;
+    public Robot r;
 
     @Override
-    public void runOpMode() {
-        frontLeftDrive = hardwareMap.get(DcMotor.class, "motor0");
-        backLeftDrive = hardwareMap.get(DcMotor.class, "motor1");
-        frontRightDrive = hardwareMap.get(DcMotor.class, "motor2");
-        backRightDrive = hardwareMap.get(DcMotor.class, "motor3");
-
-        /* The device name stands for which motor/servo port it correlates to. ex stands for
-        expansion hub
-        For example: motor 0 is the motor port labeled zero on control hub
-        exServo 0 is the servo port labeled 0 on the expansion hub
-        */
-//        motorLeftVert = hardwareMap.get(DcMotor.class, "exMotor0");
-//        motorLeftVert.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-//        motorRightVert = hardwareMap.get(DcMotor.class, "exMotor1");
-//        motorRightVert.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-//        motorHang = hardwareMap.get(DcMotor.class, "exMotor2");
-//        motorHang.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-//
-//        intakeServoLeft = hardwareMap.get(CRServo.class, "servo1");
-//        intakeServoRight = hardwareMap.get(CRServo.class, "servo0");
-//        horizontalSlideLeft = hardwareMap.get(Servo.class, "servo2");
-//        horizontalSlideRight = hardwareMap.get(Servo.class, "servo3");
-//        passoverServoLeft = hardwareMap.get(Servo.class, "passoverServo4");
-//        passoverServoRight = hardwareMap.get(Servo.class,"passoverServo5");
-//        outtakeServoLeft = hardwareMap.get(Servo.class,"exServo0");
-//        outtakeServoRight = hardwareMap.get(Servo.class,"exServo1");
-//        gateServo = hardwareMap.get(Servo.class,"exServo2");
-
-        frontLeftDrive.setDirection(DcMotor.Direction.REVERSE);
-        backLeftDrive.setDirection(DcMotor.Direction.REVERSE);
-        backRightDrive.setDirection(DcMotor.Direction.FORWARD);
-        frontRightDrive.setDirection(DcMotor.Direction.FORWARD);
-//
-//        intakeServoLeft.setDirection(CRServo.Direction.REVERSE);
-//        horizontalSlideRight.setDirection(Servo.Direction.REVERSE); // this ain't a typo it supposed to be right idk why
-//        passoverServoLeft.setDirection(Servo.Direction.REVERSE);
-//        motorLeftVert.setDirection(DcMotor.Direction.REVERSE);
-//        motorHang.setDirection(DcMotorSimple.Direction.REVERSE);
-//        outtakeServoLeft.setDirection(Servo.Direction.REVERSE);
-
-
-        // Retrieve and initialize the IMU. We expect the IMU to be attached to an I2C port
-        // on a Core Device Interface Module, configured to be a sensor of type "AdaFruit IMU",
-        // and named "imu".
-        imu = hardwareMap.get(IMU.class, "imu");
-
-        IMU.Parameters parameters = new IMU.Parameters(new RevHubOrientationOnRobot(
-                RevHubOrientationOnRobot.LogoFacingDirection.UP,
-                RevHubOrientationOnRobot.UsbFacingDirection.FORWARD
-        ));
-
-        imu.initialize(parameters);
-
-        // Wait for the game to start (driver presses START)
-        telemetry.addData("Status", "Initialized");
-        telemetry.update();
+    public void runOpMode() throws InterruptedException {
+        // instantiate our robot object
+        r = new Robot(hardwareMap, telemetry);
 
         waitForStart();
-        runtime.reset();
 
-        // run until the end of the match (driver presses STOP)
+        // reset imu
+        r.imu.resetYaw();
+        r.runtime.reset();
+
         while (opModeIsActive()) {
-            double max;
+            // teleop logic
+            r.telemetryAprilTag();
+            // Push telemetry to the Driver Station.
+            telemetry.update();
 
-            // POV Mode uses left joystick to go forward & strafe, and right joystick to rotate.
-            double y = -gamepad1.left_stick_y;  // Note: pushing stick forward gives negative value
-            double x = gamepad1.left_stick_x; //x
-            double rx = gamepad1.right_stick_x; //rx
+            if (r.buffer) {
+                if (r.runtime.milliseconds() - r.prevBuffer >= r.bufferTime) {
+                    // reset buffer
+                    r.buffer = false;
+                    r.prevBuffer = 0;
 
-            //removed negative from here
-            if (gamepad1.options) {
-                imu.resetYaw();
+                    // move the claw down
+                    r.passoverServoLeft.setPosition(0);
+                    r.passoverServoRight.setPosition(0);
+                }
             }
 
-            double heading = imu.getRobotYawPitchRollAngles().getYaw(AngleUnit.RADIANS);
+            // stop the vertical linear slides if they are not busy
+            if (!r.motorLeftVert.isBusy()) r.motorLeftVert.setPower(0);
+            if (!r.motorRightVert.isBusy()) r.motorRightVert.setPower(0);
 
-            double adjustedX = x * Math.cos(-heading) - y * Math.sin(-heading);
-            double adjustedY = x * Math.sin(-heading) + y * Math.cos(-heading);
+            double max;
+            // don't question it. I don't know why it works like this. It just does.
+            double y = -gamepad1.left_stick_y;  // Note: pushing stick forward gives negative value
+            double x = gamepad1.left_stick_x; //x
+            double rx = gamepad1.right_stick_x;//rx
+//            double y2 = gamepad2.left_stick_y * .75 ;
+
+            //will reset the direction of the robot relative of the position it is currently at
+            if (gamepad1.options) {
+                r.imu.resetYaw();
+            }
+
+            double heading = r.imu.getRobotYawPitchRollAngles().getYaw(AngleUnit.RADIANS);
+
+            //does math stuff to keep directions constant
+            // TODO: i swtiched the heading to -heading -- small hacks like these might prove an issue later down the road. please dedicate time to figure out the root cause
+            double adjustedX = y * Math.sin(heading) + x * Math.cos(heading);
+            double adjustedY = y * Math.cos(heading) - x * Math.sin(heading);
 
             // Combine the joystick requests for each axis-motion to determine each wheel's power.
-//            // Set up a variable for each drive wheel to save the power level for telemetry.
-
+            // Set up a variable for each drive wheel to save the power level for telemetry.
             double leftFrontPower = adjustedY + adjustedX + rx;
             double rightFrontPower = adjustedY - adjustedX - rx;
             double leftBackPower = adjustedY - adjustedX + rx;
@@ -133,226 +101,159 @@ public class MainDrive extends LinearOpMode {
             max = Math.max(Math.abs(leftFrontPower), Math.abs(rightFrontPower));
             max = Math.max(max, Math.abs(leftBackPower));
             max = Math.max(max, Math.abs(rightBackPower));
+
             //sets default speed
-            double power = 0.7;
+            double default_power = .95;
+            double power = default_power;
+
             //slow mode
             if (gamepad1.right_bumper) {
-                power = (power * 0.5);
+                power = default_power * 0.5;
             }
-            //fast mode
+
+            // fast mode
             if (gamepad1.left_bumper) {
                 power = 1;
             }
 
-//            if (max > 1.0) {
-//                leftFrontPower /= max;
-//                rightFrontPower /= max;
-//                leftBackPower /= max;
-//                rightBackPower /= max;
+            if (max > 1.0) {
+                leftFrontPower /= max;
+                rightFrontPower /= max;
+                leftBackPower /= max;
+                rightBackPower /= max;
+            }
+
+            if (gamepad1.left_bumper && !r.toggleSwitch) {
+                r.toggleSwitch = true;
+            } else if (gamepad1.left_bumper && r.toggleSwitch) {
+                r.toggleSwitch = false;
+            }
+
+            //converts from field oriented drive to robot oriented drive
+            if (!gamepad1.left_bumper & r.toggleSwitch) {
+                leftFrontPower = y + x + rx;
+                rightFrontPower = y - x - rx;
+                leftBackPower = y - x + rx;
+                rightBackPower = y + x - rx;
+            }
+
+            // drive
+            r.frontLeftDrive.setPower(leftFrontPower * power);
+            r.frontRightDrive.setPower(rightFrontPower * power);
+            r.backLeftDrive.setPower(leftBackPower * power);
+            r.backRightDrive.setPower(rightBackPower * power);
+
+            // todo: try to automate the passover more, aka less button presses
+
+            // MAX DEGREES IS 0 TO 300.
+
+            //close intake and open outtake
+            if (gamepad2.right_trigger > 0) {
+                r.outtakeClawServo.setPosition(0.35);
+                r.intakeClawServo.setPosition(0.15);
+            }
+
+//            if (gamepad2.right_trigger > 0) {
+//                outtakeClawServo.setPosition(servoAngle(120));
+//                intakeClawServo.setPosition(servoAngle(45));
 //            }
 
-//            if (gamepad2.options && !toggleSwitch) {
-//                toggleSwitch = true;
-//            } else if (gamepad2.options && toggleSwitch) {
-//                toggleSwitch = false;
-//            }
-//            //converts from field oriented drive to robot oriented drive
-//            if (toggleSwitch) {
-//                leftFrontPower = y + x + rx;
-//                rightFrontPower = y - x - rx;
-//                leftBackPower = y - x + rx;
-//                rightBackPower = y + x - rx;
-//            }
+            //open intake and close outtake
+            if (gamepad2.left_trigger > 0) {
+                r.outtakeClawServo.setPosition(0.15);
+                r.intakeClawServo.setPosition(0.35);
+            }
 //
-            frontLeftDrive.setPower(leftFrontPower * power);
-            backRightDrive.setPower(rightFrontPower * power);
-            backLeftDrive.setPower(leftBackPower * power);
-            frontRightDrive.setPower(rightBackPower * power);
-//
-//            //Intake System
-//            if (gamepad1.right_trigger > 0 || gamepad2.right_trigger > 0) {
-//                intakeServoLeft.setPower(-0.5);
-//                intakeServoRight.setPower(-0.5);
-//            } else if (gamepad1.left_trigger > 0) {
-//                    intakeServoLeft.setPower(0.5);
-//                    intakeServoRight.setPower(0.5);
-//                }
-//                else {
-//                    intakeServoLeft.setPower(0);
-//                    intakeServoRight.setPower(0);
-//                }
-//
-//            if (gamepad1.a) {
-//                //SUBJECT TO CHANGE DUE TO MECHANICAL AND SERVO RANGE
-//                //also set servo range to the specific rotation we need
-//                horizontalSlideRight.setPosition(0.5);
-//                horizontalSlideLeft.setPosition(0.5);
+//            if (gamepad2.left_trigger > 0) {
+//                outtakeClawServo.setPosition(servoAngle(45));
+//                intakeClawServo.setPosition(servoAngle(120));
 //            }
 
+            // extend
+            if (gamepad2.a) {
+                //SUBJECT TO CHANGE DUE TO MECHANICAL AND SERVO RANGE
+                //also set servo range to the specific rotation we need
+                r.horizontalSlideRight.setPosition(r.axonServoAngle(50));
+                r.horizontalSlideLeft.setPosition(r.axonServoAngle(50));
+                r.passoverServoLeft.setPosition(r.axonServoAngle(228));
+                r.passoverServoRight.setPosition(r.axonServoAngle(228));
 
-            /*
-       Should make this a sequence from returning to reset position to passing to outtake so we
-       we don't need to press an input for each individual part
-       */
+            }
+            //pivot
+            if (gamepad2.y) {
+                r.passoverServoRight.setPosition(r.axonServoAngle(315));
+                r.passoverServoLeft.setPosition(r.axonServoAngle(135));
+            }
+            //unpivot
+            if (gamepad2.x) {
+                r.passoverServoRight.setPosition(r.axonServoAngle(228));
+                r.passoverServoLeft.setPosition(r.axonServoAngle(228));
+            }
+
             // retract
-//            if (gamepad1.b) {
-//                horizontalSlideLeft.setPosition(0.3);
-//                horizontalSlideRight.setPosition(0.3);
-//            }
-//            //intake position
-//            if (gamepad1.x){
-//                passoverServoLeft.setPosition(0.4);
-//                passoverServoRight.setPosition(0.4);
-//            }
-//            //passover position
-//            if (gamepad1.y){
-//                passoverServoRight.setPosition(0.9);
-//                passoverServoLeft.setPosition(0.9);
-//            }
-//            //The intake has a gate that prevents it from spitting the sample from it's backside.
-//            if (gamepad2.left_bumper){
-//                gateServo.setPosition(1);
-//            } else {
-//                gateServo.setPosition(0);
-//            }
-//
-//            //outtake system
-//            if (gamepad2.dpad_up) {
-//                //telling the motor to rotate one inch
-//                positionTopOuttake();
-//            }
-//
-//            if (gamepad2.dpad_right){
-//                positionMidOuttake();
-//            }
-//            //continues to keep track of ticks after pressing the button, it'll keep the position until a separate input tells it otherwise.
-//
-//            //bring it back one inch, this will also hold the slides in the same position.
-//            if (gamepad2.dpad_down) {
-//                resetOuttakeSlides();
-//            }
-//
-//            //hang commands
-//            if (gamepad2.y) {
-//                positionTopHang();
-//            }
-//            if (gamepad2.a){
-//                resetHang();
-//            }
+            if (gamepad2.b) {
+                r.horizontalSlideLeft.setPosition(r.axonServoAngle(0));
+                r.horizontalSlideRight.setPosition(r.axonServoAngle(0));
+                r.passoverServoRight.setPosition(r.axonServoAngle(0));
+                r.passoverServoLeft.setPosition(r.axonServoAngle(0));
+            }
+
 //            if (gamepad2.x) {
-//                positionMidHang();
+//                outtakePositionServoLeft.setPosition(.2);
+//                outtakePositionServoRight.setPosition(.2);
 //            }
-//
-//            //Outtake servo code here
-//            if (gamepad2.left_trigger > 0){
-//                outtakeServoLeft.setPosition(1);
-//                outtakeServoRight.setPosition(1);
-//            } else {
-//                outtakeServoLeft.setPosition(0);
-//                outtakeServoRight.setPosition(0);
+//            if (gamepad2.y) {
+//                outtakePositionServoLeft.setPosition(0.75);
+//                outtakePositionServoRight.setPosition(0.75);
 //            }
 
-//            if (gamepad2.left_trigger > 0){
-//                outtakeServoLeft.setPosition(1);
-//                outtakeServoRight.setPosition(1);
-//            }
+            //grabs specimen from wall
+            if (gamepad2.right_bumper) {
+                r.outtakePositionServoRight.setPosition(0.97);
+                r.outtakePositionServoLeft.setPosition(0.97);
+            }
 
-            // Show the elapsed game time and wheel power.
-            telemetry.addData("Status", "Run Time: " + runtime.toString());
+            if (gamepad2.dpad_up) {
+                //telling the motor to rotate one inch
+                r.positionTopOuttake();
+                r.outtakePositionServoLeft.setPosition(0.75);
+                r.outtakePositionServoRight.setPosition(0.75);
+            }
+
+            if (gamepad2.dpad_right) {
+                r.positionMidOuttake();
+                r.outtakePositionServoRight.setPosition(0.97);
+                r.outtakePositionServoLeft.setPosition(0.97);
+            }
+
+            if (gamepad2.dpad_down) {
+                r.resetOuttakeSlides();
+                r.outtakePositionServoLeft.setPosition(.16);
+                r.outtakePositionServoRight.setPosition(.16);
+            }
+
+
+            if (gamepad2.dpad_left) {
+                r.scoreSpecimen();
+            }
+
+            /* This gives us data un parts of the robot we want
+            A template to do this is:
+            telementry.addDate("What you want the name of the data to show up as ", [mechanism you want to check].getCurrentPosition());
+            Now some parts can very depending what you want
+            Now for example, you can get the ticks of a motor or continuous servo by using '.getCurrentPosition'
+                 */
+            telemetry.addData("Status", "Run Time: " + r.runtime.toString());
             telemetry.addData("Front left/Right", "%4.2f, %4.2f", leftFrontPower, rightFrontPower);
             telemetry.addData("Back  left/Right", "%4.2f, %4.2f", leftBackPower, rightBackPower);
-//            telemetry.addData("Horizontal Slide Left Position",horizontalSlideLeft.getPosition());
-//            telemetry.addData("Horizontal Slide Right Position",horizontalSlideRight.getPosition());
-//            telemetry.addData("Passover Slide Left Position",passoverServoLeft.getPosition());
-//            telemetry.addData("Passover Slide Right Position",passoverServoRight.getPosition());
+            telemetry.addData("Motor ticks 1", r.motorLeftVert.getCurrentPosition());
+            telemetry.addData("Motor ticks 2", r.motorRightVert.getCurrentPosition());
+//            telemetry.addData("Servo position", servoAngle(servoTarget));
             telemetry.update();
         }
+        // end teleop mode
+
+        r.visionPortal.close();
+        // saves CPU
     }
-
-    //positions and conversions
-
-    double ticksPerRotation = 537.6;
-    double wheelCircumference = 11.8737374;
-    double spoolCircumference = 4.40945;
-    //finds the amount of ticks per inch of rotation
-    // 2786.2 ticks /1.4 inch = 1990 ticks per inch of rotation
-    double newTarget;
-    double midBinHeightInches = -16;
-    double topBinHeightInches = -43;
-    double midHangInches = -20;
-    double topHangInches = -36;
-
-    private double ticksToInchesSpool(double inches) {
-        return inches * ticksPerRotation / spoolCircumference;
-    }
-
-//    public void positionTopOuttake() {
-////        motorLeftVert.setDirection(DcMotor.Direction.REVERSE);
-////        motorLeftVert.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-////        motorRightVert.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-//        newTarget = ticksToInchesSpool(topBinHeightInches);
-//
-//        motorLeftVert.setTargetPosition((int) newTarget);
-//        motorRightVert.setTargetPosition((int) newTarget);
-//
-//        motorLeftVert.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-//        motorRightVert.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-//
-//        motorLeftVert.setPower(0.8);
-//        motorRightVert.setPower(0.8);
-//    }
-//    private double ticksToInchesWheel(double inches) {
-//        return inches * ticksPerRotation / wheelCircumference;
-//    }
-//
-//    public void positionMidOuttake() {
-////        motorLeftVert.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-////        motorRightVert.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-//        newTarget = ticksToInchesSpool(midBinHeightInches);
-//
-//        motorLeftVert.setTargetPosition((int) newTarget);
-//        motorRightVert.setTargetPosition((int) newTarget);
-//
-//        motorLeftVert.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-//        motorRightVert.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-//
-//        motorLeftVert.setPower(0.8);
-//        motorRightVert.setPower(0.8);
-//    }
-//
-//    public void positionMidHang() {
-////        motorHang.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-//        newTarget = ticksToInchesSpool(midHangInches);
-//        motorHang.setTargetPosition((int) newTarget);
-//        motorHang.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-//        motorHang.setPower(0.4);
-//    }
-
-//    public void positionTopHang() {
-////        motorHang.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-//        newTarget = ticksToInchesSpool(topHangInches);
-//        motorHang.setTargetPosition((int) newTarget);
-//        motorHang.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-//        motorHang.setPower(0.4);
-//    }
-//
-//    //reset position
-//    public void resetOuttakeSlides() {
-//        motorLeftVert.setTargetPosition(0);
-//        motorRightVert.setTargetPosition(0);
-//
-//        motorLeftVert.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-//        motorRightVert.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-//
-//        motorLeftVert.setPower(0.5);
-//        motorRightVert.setPower(0.5);
-//    }
-//    public void resetHang() {
-////       motorHang.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-//        /*wheelRevolution = 96mm = 3.78 inches if for wheels
-//          wheelRevolution will equal inner diameter of spool if for linear spool */
-//        motorHang.setTargetPosition(0);
-//        motorHang.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-//        motorHang.setPower(0.6);
-//    }
 }
