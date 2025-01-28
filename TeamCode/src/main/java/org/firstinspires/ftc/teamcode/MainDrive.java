@@ -148,8 +148,8 @@ public class MainDrive extends LinearOpMode {
 
             //close intake and open outtake
             if (gamepad2.right_trigger > 0) {
-                r.outtakeClawServo.setPosition(0.35);
-                r.intakeClawServo.setPosition(0.15);
+                r.closeIntake();
+                r.openOuttake();
             }
 
 //            if (gamepad2.right_trigger > 0) {
@@ -159,8 +159,8 @@ public class MainDrive extends LinearOpMode {
 
             //open intake and close outtake
             if (gamepad2.left_trigger > 0) {
-                r.outtakeClawServo.setPosition(0.15);
-                r.intakeClawServo.setPosition(0.35);
+                r.openIntake();
+                r.closeOuttake();
             }
 //
 //            if (gamepad2.left_trigger > 0) {
@@ -172,31 +172,27 @@ public class MainDrive extends LinearOpMode {
             if (gamepad2.a) {
                 //SUBJECT TO CHANGE DUE TO MECHANICAL AND SERVO RANGE
                 //also set servo range to the specific rotation we need
-                r.horizontalSlideRight.setPosition(r.axonServoAngle(50));
-                r.horizontalSlideLeft.setPosition(r.axonServoAngle(50));
-                r.passoverServoLeft.setPosition(r.axonServoAngle(228));
-                r.passoverServoRight.setPosition(r.axonServoAngle(228));
-            }
-            //pivot
-            if (gamepad2.y) {
-                r.passoverServoRight.setPosition(r.axonServoAngle(315));
-                r.passoverServoLeft.setPosition(r.axonServoAngle(135));
-            }
-            //unpivot
-            if (gamepad2.x) {
-                r.passoverServoRight.setPosition(r.axonServoAngle(228));
-                r.passoverServoLeft.setPosition(r.axonServoAngle(228));
+                r.extendHorizontalSlides();
+                r.dropDiffIntake();
             }
 
             // retract
             if (gamepad2.b) {
-                r.horizontalSlideLeft.setPosition(r.axonServoAngle(0));
-                r.horizontalSlideRight.setPosition(r.axonServoAngle(0));
-                r.passoverServoRight.setPosition(r.axonServoAngle(0));
-                r.passoverServoLeft.setPosition(r.axonServoAngle(0));
+                r.retractHorizontalSlides();
+                // diff intake might be too slow during transition, may need to add buffer
+                r.raiseDiffIntake();
             }
 
-//            if (gamepad2.x) {
+            //pivot
+            if (gamepad2.y) {
+                r.pivotPassover();
+            }
+            //unpivot
+            if (gamepad2.x) {
+                r.unpivotPassover();
+            }
+
+//          if (gamepad2.x) {
 //                outtakePositionServoLeft.setPosition(.2);
 //                outtakePositionServoRight.setPosition(.2);
 //            }
@@ -207,37 +203,28 @@ public class MainDrive extends LinearOpMode {
 
             //grabs specimen from wall
             if (gamepad2.right_bumper) {
-                r.outtakePositionServoRight.setPosition(0.97);
-                r.outtakePositionServoLeft.setPosition(0.97);
+                r.specimenOffWall();
             }
 
             if (gamepad2.dpad_up) {
                 //telling the motor to rotate one inch
                 r.positionTopOuttake();
-                r.outtakePositionServoLeft.setPosition(0.75);
-                r.outtakePositionServoRight.setPosition(0.75);
+                r.outtakeServoTopDropoff();
             }
 
             if (gamepad2.dpad_right) {
                 r.positionMidOuttake();
-                r.outtakePositionServoRight.setPosition(0.97);
-                r.outtakePositionServoLeft.setPosition(0.97);
+                r.outtakeServoMidDropoff();
             }
 
             if (gamepad2.dpad_down) {
                 r.resetOuttakeSlides();
-                r.outtakePositionServoLeft.setPosition(.16);
-                r.outtakePositionServoRight.setPosition(.16);
+                r.resetOuttakeServo();
             }
 
 
             if (gamepad2.dpad_left) {
                 r.scoreSpecimen();
-            }
-
-            if (gamepad2.right_stick_button){
-                r.outtakePositionServoLeft.setPosition(.97);
-                r.outtakePositionServoLeft.setPosition(.97);
             }
 
             /* This gives us data un parts of the robot we want

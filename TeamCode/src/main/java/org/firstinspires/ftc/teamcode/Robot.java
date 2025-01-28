@@ -226,8 +226,8 @@ public class Robot {
         motorLeftVert.setMode(DcMotor.RunMode.RUN_TO_POSITION);
         motorRightVert.setMode(DcMotor.RunMode.RUN_TO_POSITION);
 
-        motorLeftVert.setPower(0.8);
-        motorRightVert.setPower(0.8);
+        motorLeftVert.setPower(0.9);
+        motorRightVert.setPower(0.9);
     }
 
     public void positionMidOuttake() {
@@ -239,8 +239,20 @@ public class Robot {
         motorLeftVert.setMode(DcMotor.RunMode.RUN_TO_POSITION);
         motorRightVert.setMode(DcMotor.RunMode.RUN_TO_POSITION);
 
-        motorLeftVert.setPower(0.8);
-        motorRightVert.setPower(0.8);
+        motorLeftVert.setPower(0.9);
+        motorRightVert.setPower(0.9);
+    }
+
+    //reset position
+    public void resetOuttakeSlides() {
+        motorLeftVert.setTargetPosition(0);
+        motorRightVert.setTargetPosition(0);
+
+        motorLeftVert.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+        motorRightVert.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+
+        motorLeftVert.setPower(0.9);
+        motorRightVert.setPower(0.9);
     }
 
     public void positionMidHang() {
@@ -279,27 +291,76 @@ public class Robot {
         motorLeftVert.setPower(0.5);
     }
 
-    //reset position
-    public void resetOuttakeSlides() {
-        motorLeftVert.setTargetPosition(0);
-        motorRightVert.setTargetPosition(0);
-
-        motorLeftVert.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-        motorRightVert.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-
-        motorLeftVert.setPower(0.7);
-        motorRightVert.setPower(0.7);
-    }
-
-    public void extendSlides() {
-        horizontalSlideRight.setPosition(axonServoAngle(50));
-        horizontalSlideLeft.setPosition(axonServoAngle(50));
-    }
-
     public void resetHang() {
         motorHang.setTargetPosition(0);
         motorHang.setMode(DcMotor.RunMode.RUN_TO_POSITION);
         motorHang.setPower(0.6);
+    }
+
+    public void openIntake() {
+        intakeClawServo.setPosition(0.35);
+    }
+
+    public void closeIntake() {
+        intakeClawServo.setPosition(0.15);
+    }
+
+    public void openOuttake() {
+        outtakeClawServo.setPosition(0.35);
+    }
+
+    public void closeOuttake() {
+        outtakeClawServo.setPosition(0.15);
+    }
+
+    public void extendHorizontalSlides() {
+        horizontalSlideRight.setPosition(axonServoAngle(50));
+        horizontalSlideLeft.setPosition(axonServoAngle(50));
+    }
+
+    public void retractHorizontalSlides() {
+        horizontalSlideLeft.setPosition(axonServoAngle(0));
+        horizontalSlideRight.setPosition(axonServoAngle(0));
+    }
+
+    public void dropDiffIntake() {
+        passoverServoLeft.setPosition(axonServoAngle(228));
+        passoverServoRight.setPosition(axonServoAngle(228));
+    }
+
+    public void raiseDiffIntake() {
+        passoverServoRight.setPosition(axonServoAngle(0));
+        passoverServoLeft.setPosition(axonServoAngle(0));
+    }
+
+    public void pivotPassover() {
+        passoverServoRight.setPosition(axonServoAngle(315));
+        passoverServoLeft.setPosition(axonServoAngle(135));
+    }
+
+    public void unpivotPassover() {
+        passoverServoRight.setPosition(axonServoAngle(228));
+        passoverServoLeft.setPosition(axonServoAngle(228));
+    }
+
+    public void specimenOffWall() {
+        outtakePositionServoRight.setPosition(0.97);
+        outtakePositionServoLeft.setPosition(0.97);
+    }
+
+    public void outtakeServoTopDropoff() {
+        outtakePositionServoLeft.setPosition(0.75);
+        outtakePositionServoRight.setPosition(0.75);
+    }
+
+    public void outtakeServoMidDropoff() {
+        outtakePositionServoLeft.setPosition(0.97);
+        outtakePositionServoRight.setPosition(0.97);
+    }
+
+    public void resetOuttakeServo() {
+        outtakePositionServoLeft.setPosition(.16);
+        outtakePositionServoRight.setPosition(.16);
     }
 
     public void initAprilTag() {

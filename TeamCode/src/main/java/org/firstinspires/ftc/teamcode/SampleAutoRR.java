@@ -19,180 +19,186 @@ public class SampleAutoRR extends LinearOpMode {
 
         SampleMecanumDrive drive = new SampleMecanumDrive(hardwareMap);
 
-        Pose2d startPose = new Pose2d(-10, -65, Math.PI/2);
-
-        drive.setPoseEstimate(startPose);
-
         double moveBinSleep = 4;
         double slidesUp = 2.8;
         double outtakeServoDown = 1;
-        double clawOpen = 0.6;
+        double openOuttakeTime = 0.6;
         double slidesDown = 2.5;
         double moveToFirstSample = 1;
         double moveToSecondSample = 1;
         double extendSlides = 0.5;
         double diffVertTime = 0.5;
         double closeAndOpenIntakeClaw = 0.6;
-        double passingSample = 0.4;
+        double passoverTime = 0.4;
         double firstSampleToBin = 1;
+
+        Pose2d startPose = new Pose2d(-10, -65, Math.PI/2);
+        Pose2d closeToBin = new Pose2d(-48, -55, Math.PI/4);
+        Pose2d atBin = new Pose2d(-56.75, -62.75, Math.PI/4);
+        Pose2d firstSamplePosition = new Pose2d(-46.3, -52, Math.PI/2);
+        Pose2d secondSamplePosition = new Pose2d(-57.3, -51, Math.PI/2);
+
+        drive.setPoseEstimate(startPose);
 
         TrajectorySequence mainTrajSeq = drive.trajectorySequenceBuilder(startPose)
                 .addTemporalMarker(0, () -> {
-                    r.horizontalSlideLeft.setPosition(r.axonServoAngle(0));
-                    r.horizontalSlideRight.setPosition(r.axonServoAngle(0));
+                    r.retractHorizontalSlides();
                 })
                 // move close to the bin then go backwards cuz if not robot will clip into the wall
-                .splineToLinearHeading(new Pose2d(-48, -55, Math.PI/4), 3*Math.PI/4) // 2sqrt2 away from the bin
+                .splineToLinearHeading(closeToBin, 3*Math.PI/4) // 2sqrt2 away from the bin
                 // move to the bin
-                .lineToLinearHeading(new Pose2d(-56.75, -62.75, Math.PI/4))
+                .lineToLinearHeading(atBin)
                 // move slides up
                 .addTemporalMarker(4, () -> {
                     r.positionTopOuttake();
                 })
                 .waitSeconds(slidesUp)
-                .addTemporalMarker(moveBinSleep + slidesUp, () -> {
+                .addTemporalMarker(6.8, () -> {
                     // outtake position drop
-                    r.outtakePositionServoLeft.setPosition(0.75);
-                    r.outtakePositionServoRight.setPosition(0.75);
+                    r.outtakeServoTopDropoff();
                 })
                 .waitSeconds(outtakeServoDown)
-                .addTemporalMarker(moveBinSleep + slidesUp + outtakeServoDown, () -> {
+                .addTemporalMarker(7.8, () -> {
                     // outtake claw open
-                    r.outtakeClawServo.setPosition(0.35);
+                    r.openOuttake();
                 })
-                .waitSeconds(clawOpen)
+                .waitSeconds(openOuttakeTime)
                 // slides are moving down at the same time the bot is moving to first sample position
-                .addTemporalMarker(moveBinSleep + slidesUp + outtakeServoDown + clawOpen, () -> {
-                    r.outtakePositionServoLeft.setPosition(0.17);
-                    r.outtakePositionServoRight.setPosition(0.17);
+                .addTemporalMarker(8.4, () -> {
+                    r.resetOuttakeServo();
                     // also open outtake claw preemptively
-                    r.outtakeClawServo.setPosition(0.35);
+                    r.openOuttake();
                     r.resetOuttakeSlides();
                 })
                 // move to first sample
-                .lineToLinearHeading(new Pose2d(-46.3, -52, Math.PI/2))
+                .lineToLinearHeading(firstSamplePosition)
                 .waitSeconds(moveToFirstSample)
                 // extend horizontal slides and open intake claw
-                .addTemporalMarker(moveBinSleep + slidesUp + outtakeServoDown + clawOpen + moveToFirstSample, () -> { // extend differential claw
-                    r.horizontalSlideRight.setPosition(r.axonServoAngle(50));
-                    r.horizontalSlideLeft.setPosition(r.axonServoAngle(50));
-                    // also open intake servo
-                    r.intakeClawServo.setPosition(0.37);
+                .addTemporalMarker(9.4, () -> { // extend differential claw
+                    r.extendHorizontalSlides();
+                    r.openIntake();
                 })
                 .waitSeconds(extendSlides)
                 // move diff servo down
-                .addTemporalMarker(6.8 + outtakeServoDown + clawOpen + moveToFirstSample + extendSlides, () -> { // extend differential claw
-                    r.passoverServoLeft.setPosition(r.axonServoAngle(228));
-                    r.passoverServoRight.setPosition(r.axonServoAngle(228));
-                })
-                .waitSeconds(diffVertTime)
-                // close intake claw ---- +0.3 might fuck up the whole thing but it is what it is
-                .addTemporalMarker(6.8 + 0.3 + outtakeServoDown + clawOpen + moveToFirstSample + extendSlides + diffVertTime, () -> {
-                    r.intakeClawServo.setPosition(0.15);
-                })
-                .waitSeconds(closeAndOpenIntakeClaw)
-                // raise the diff vert and retract linear slide
-                .addTemporalMarker(6.8 + outtakeServoDown + clawOpen + moveToFirstSample + extendSlides + diffVertTime + closeAndOpenIntakeClaw, () -> {
-                    r.horizontalSlideRight.setPosition(r.axonServoAngle(0));
-                    r.horizontalSlideLeft.setPosition(r.axonServoAngle(0));
-                    r.passoverServoRight.setPosition(r.axonServoAngle(0));
-                    r.passoverServoLeft.setPosition(r.axonServoAngle(0));
-                })
-                .waitSeconds(passingSample) // retract and extend same time dont matter
-                .addTemporalMarker(6.8 + 0.3 + outtakeServoDown + clawOpen + moveToFirstSample + extendSlides + diffVertTime + closeAndOpenIntakeClaw + extendSlides, () -> {
-                    // grab the sample
-                    // close outtake claw
-                    r.outtakeClawServo.setPosition(0.15);
-                    // let go of the intake claw
-                    r.intakeClawServo.setPosition(0.35);
-                    // immediately start moving
-                })
-                // move back to bin to immediately move the linear slides up
-                .lineToLinearHeading(new Pose2d(-57.75, -63.75, Math.PI/4))
-                // to save time start the linear slides going up already; wait for firstSampleToBin
-                .addTemporalMarker(6.8 + outtakeServoDown + clawOpen + moveToFirstSample + extendSlides + diffVertTime + closeAndOpenIntakeClaw + extendSlides + passingSample, () -> {
-                    r.positionTopOuttake();
-                })
-                // wait for the movetobin and top outtake to finish, then drop the outtake servo
-                .waitSeconds(slidesUp) // they are moving at the same time so just sleep for the longer one
-                // drop outtake servo
-                .addTemporalMarker(6.8 + 0.3 + outtakeServoDown + clawOpen + moveToFirstSample + extendSlides + diffVertTime + closeAndOpenIntakeClaw + extendSlides + passingSample + firstSampleToBin, () -> {
-                    r.outtakePositionServoLeft.setPosition(0.72);
-                    r.outtakePositionServoRight.setPosition(0.72);
-                })
-                .waitSeconds(outtakeServoDown)
-                // open outtake claw and start moving the slides down
-                .addTemporalMarker(6.8 + 0.3 +outtakeServoDown + clawOpen + moveToFirstSample + extendSlides + diffVertTime + closeAndOpenIntakeClaw + extendSlides + passingSample + firstSampleToBin + outtakeServoDown, () -> {
-                    r.outtakeClawServo.setPosition(0.35);
-                    r.resetOuttakeSlides();
-                })
-                // wait a tiny second for the outtake claw to open, the move the outtake position back down
-                .waitSeconds(clawOpen)
-                .addTemporalMarker(6.8 + 0.3 +outtakeServoDown + clawOpen + moveToFirstSample + extendSlides + diffVertTime + closeAndOpenIntakeClaw + extendSlides + passingSample + firstSampleToBin + outtakeServoDown + clawOpen, () -> {
-                    r.outtakeClawServo.setPosition(0.35);
-                    r.resetOuttakeSlides();
-                })
-                // move robot to second sample position
-                .lineToLinearHeading(new Pose2d(-57.3, -51, Math.PI/2))
-                .waitSeconds(moveToSecondSample)
-                // SECOND TIME AROUND BIG MARKER
-                .addTemporalMarker(6.8 + 0.3 + outtakeServoDown + clawOpen + moveToFirstSample + extendSlides + diffVertTime + closeAndOpenIntakeClaw + extendSlides + passingSample + firstSampleToBin + outtakeServoDown + clawOpen + moveToSecondSample, () -> { // extend differential claw
-                    r.horizontalSlideRight.setPosition(r.axonServoAngle(50));
-                    r.horizontalSlideLeft.setPosition(r.axonServoAngle(50));
-                    // also open intake servo
-                    r.intakeClawServo.setPosition(0.35);
-                })
-                .waitSeconds(extendSlides)
-                // move diff servo down
-                .addTemporalMarker(6.8 + 0.3 + outtakeServoDown + clawOpen + moveToFirstSample + extendSlides + diffVertTime + closeAndOpenIntakeClaw + extendSlides + passingSample + firstSampleToBin + outtakeServoDown + clawOpen + moveToSecondSample + extendSlides, () -> { // extend differential claw
-                    r.passoverServoLeft.setPosition(r.axonServoAngle(228));
-                    r.passoverServoRight.setPosition(r.axonServoAngle(228));
+                .addTemporalMarker(9.9, () -> { // extend differential claw
+                    r.dropDiffIntake();
                 })
                 .waitSeconds(diffVertTime)
                 // close intake claw
-                .addTemporalMarker(6.8 + 0.3 + outtakeServoDown + clawOpen + moveToFirstSample + extendSlides + diffVertTime + closeAndOpenIntakeClaw + extendSlides + passingSample + firstSampleToBin + outtakeServoDown + clawOpen + moveToSecondSample + extendSlides + diffVertTime, () -> {
-                    r.intakeClawServo.setPosition(0.15);
+                .addTemporalMarker(10.4, () -> {
+                    r.closeIntake();
                 })
                 .waitSeconds(closeAndOpenIntakeClaw)
-                // raise the diff vert and retract linear slide
-                .addTemporalMarker(6.8 + 0.3 + outtakeServoDown + clawOpen + moveToFirstSample + extendSlides + diffVertTime + closeAndOpenIntakeClaw + extendSlides + passingSample + firstSampleToBin + outtakeServoDown + clawOpen + moveToSecondSample + extendSlides + diffVertTime + closeAndOpenIntakeClaw, () -> {
-                    r.horizontalSlideRight.setPosition(r.axonServoAngle(0));
-                    r.horizontalSlideLeft.setPosition(r.axonServoAngle(0));
-                    r.passoverServoRight.setPosition(r.axonServoAngle(0));
-                    r.passoverServoLeft.setPosition(r.axonServoAngle(0));
+                // raise diff servo
+                .addTemporalMarker(10.9, () -> {
+                    r.raiseDiffIntake();
                 })
-                .waitSeconds(passingSample) // retract and extend same time dont matter
-                .addTemporalMarker(6.8 + 0.3 + outtakeServoDown + clawOpen + moveToFirstSample + extendSlides + diffVertTime + closeAndOpenIntakeClaw + extendSlides + passingSample + firstSampleToBin + outtakeServoDown + clawOpen + moveToSecondSample + extendSlides + diffVertTime + closeAndOpenIntakeClaw + extendSlides, () -> {
-                    // grab the sample
-                    // close outtake claw
-                    r.outtakeClawServo.setPosition(0.15);
-                    // let go of the intake claw
-                    r.intakeClawServo.setPosition(0.35);
-                    // immediately start moving
+                .waitSeconds(diffVertTime)
+                // raise the diff vert and retract linear slide
+                .addTemporalMarker(11.5, () -> {
+                    r.retractHorizontalSlides();
+                })
+                .waitSeconds(passoverTime) // retract and extend same time dont matter
+                .addTemporalMarker(12.3, () -> {
+                    r.closeOuttake();
+                    r.openIntake();
+                    // immediately start moving, no waiting
                 })
                 // move back to bin to immediately move the linear slides up
-                .lineToLinearHeading(new Pose2d(-56.75, -62.75, Math.PI/4))
+                .lineToLinearHeading(atBin)
                 // to save time start the linear slides going up already; wait for firstSampleToBin
-                .addTemporalMarker(6.8 + 0.3 + outtakeServoDown + clawOpen + moveToFirstSample + extendSlides + diffVertTime + closeAndOpenIntakeClaw + extendSlides + passingSample + firstSampleToBin + outtakeServoDown + clawOpen + moveToSecondSample + extendSlides + diffVertTime + closeAndOpenIntakeClaw + extendSlides + passingSample, () -> {
+                .addTemporalMarker(12.4, () -> {
                     r.positionTopOuttake();
                 })
                 // wait for the movetobin and top outtake to finish, then drop the outtake servo
                 .waitSeconds(slidesUp) // they are moving at the same time so just sleep for the longer one
                 // drop outtake servo
-                .addTemporalMarker(6.8 + 0.3 + outtakeServoDown + clawOpen + moveToFirstSample + extendSlides + diffVertTime + closeAndOpenIntakeClaw + extendSlides + passingSample + firstSampleToBin + outtakeServoDown + clawOpen + moveToSecondSample + extendSlides + diffVertTime + closeAndOpenIntakeClaw + extendSlides + passingSample + firstSampleToBin, () -> {
-                    r.outtakePositionServoLeft.setPosition(0.72);
-                    r.outtakePositionServoRight.setPosition(0.72);
+                .addTemporalMarker(13.7, () -> {
+                    r.outtakeServoTopDropoff();
+                })
+                .waitSeconds(outtakeServoDown)
+                // open outtake claw
+                .addTemporalMarker(14.7, () -> {
+                    r.openOuttake();
+                })
+                // wait a tiny second for the outtake claw to open, the move the outtake position back down
+                .waitSeconds(openOuttakeTime)
+                .addTemporalMarker(15.3, () -> {
+                    r.resetOuttakeServo();
+                })
+                // wait just a tiny second for the outtake servo to get out the way enough for the slides to come down
+                .waitSeconds(0.1)
+                .addTemporalMarker(15.6, () -> {
+                    r.resetOuttakeSlides();
+                })
+                // move robot to second sample position
+                .lineToLinearHeading(secondSamplePosition)
+                .waitSeconds(moveToSecondSample)
+
+                // SECOND TIME AROUND BIG MARKER
+                .addTemporalMarker(16.3, () -> { // extend horizontal slides
+                    r.extendHorizontalSlides();
+                    // also open intake servo
+                    r.openIntake();
+                })
+                .waitSeconds(extendSlides)
+                // move diff servo down
+                .addTemporalMarker(16.8, () -> { // extend differential claw
+                    r.dropDiffIntake();
+                })
+                .waitSeconds(diffVertTime)
+                // close intake claw
+                .addTemporalMarker(17.3, () -> {
+                    r.closeIntake();
+                })
+                .waitSeconds(closeAndOpenIntakeClaw)
+                // raise the diff vert
+                .addTemporalMarker(17.9, () -> {
+                    r.raiseDiffIntake();
+                })
+                .waitSeconds(diffVertTime)
+                // retract linear slide
+                .addTemporalMarker(18.4, () -> {
+                    r.retractHorizontalSlides();
+                })
+                .waitSeconds(extendSlides) // retract and extend same time dont matter
+                .addTemporalMarker(18.9, () -> {
+                    // passover the sample
+                    // close outtake claw
+                    r.closeOuttake();
+                    // let go of the intake claw
+                    r.openIntake();
+                    // immediately start moving. forget about passover time, that will be encompassed by the movetobin time
+                })
+                // move back to bin to immediately move the linear slides up
+                .lineToLinearHeading(atBin)
+                // to save time start the linear slides going up already; wait for firstSampleToBin
+                // "waits" in the temporal marker for MOVETOBIN time
+                .addTemporalMarker(19.9, () -> {
+                    r.positionTopOuttake();
+                })
+                // wait for the movetobin and top outtake to finish, then drop the outtake servo
+                .waitSeconds(slidesUp) // they are moving at the same time so just sleep for the longer one
+                // drop outtake servo
+                .addTemporalMarker(20.8, () -> {
+                    r.outtakeServoTopDropoff();
                 })
                 .waitSeconds(outtakeServoDown)
                 // open outtake claw and start moving the slides down
-                .addTemporalMarker(6.8 + 0.3 + outtakeServoDown + clawOpen + moveToFirstSample + extendSlides + diffVertTime + closeAndOpenIntakeClaw + extendSlides + passingSample + firstSampleToBin + outtakeServoDown + clawOpen + moveToSecondSample + extendSlides + diffVertTime + closeAndOpenIntakeClaw + extendSlides + passingSample + firstSampleToBin + outtakeServoDown, () -> {
-                    r.outtakeClawServo.setPosition(0.35);
-                    r.resetOuttakeSlides();
+                .addTemporalMarker(21.8, () -> {
+                    r.openOuttake();
                 })
-                // wait a tiny second for the outtake claw to open, the move the outtake position back down
-                .waitSeconds(clawOpen)
-                .addTemporalMarker(6.8 + 0.3 + outtakeServoDown + clawOpen + moveToFirstSample + extendSlides + diffVertTime + closeAndOpenIntakeClaw + extendSlides + passingSample + firstSampleToBin + outtakeServoDown + clawOpen + moveToSecondSample + extendSlides + diffVertTime + closeAndOpenIntakeClaw + extendSlides + passingSample + firstSampleToBin + outtakeServoDown + clawOpen, () -> {
-                    r.outtakeClawServo.setPosition(0.35);
+                // wait a tiny second for the outtake claw to open, the move the outtake position back down. also open outtake claw preemptively
+                .waitSeconds(openOuttakeTime)
+                .addTemporalMarker(22.4, () -> {
+                    r.resetOuttakeServo();
+                    // open it preemptively for the third sample to come in during passover
+                    r.openOuttake();
+
+                })
+                // wait a tiny second then reset outtake to avoid clipping onto the top bin
+                .waitSeconds(0.3)
+                .addTemporalMarker(22.7, () -> {
                     r.resetOuttakeSlides();
                 })
                 .build();
