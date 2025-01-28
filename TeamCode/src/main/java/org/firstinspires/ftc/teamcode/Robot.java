@@ -1,9 +1,11 @@
 package org.firstinspires.ftc.teamcode;
 
+import com.qualcomm.hardware.rev.Rev2mDistanceSensor;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DigitalChannel;
+import com.qualcomm.robotcore.hardware.DistanceSensor;
 import com.qualcomm.robotcore.hardware.Gamepad;
 import com.qualcomm.robotcore.hardware.HardwareMap;
 import com.qualcomm.robotcore.hardware.Servo;
@@ -43,6 +45,7 @@ public class Robot {
     public AprilTagProcessor aprilTag;
     public VisionPortal visionPortal;
 
+
     // Declare OpMode members for each of the 4 motors.
     /*
     motor 0  = Front_left
@@ -64,6 +67,7 @@ public class Robot {
     public Servo passoverServoLeft;
     public Servo passoverServoRight;
     public DigitalChannel buttonSensor;
+
 
     public DcMotor motorLeftVert;
     public DcMotor motorRightVert;
@@ -96,6 +100,7 @@ public class Robot {
 
     private Telemetry telemetry;
     private HardwareMap hardwareMap;
+
 
     public Robot(HardwareMap hardwareMap, Telemetry telemetry) {
         this.hardwareMap = hardwareMap;
@@ -282,8 +287,13 @@ public class Robot {
         motorLeftVert.setMode(DcMotor.RunMode.RUN_TO_POSITION);
         motorRightVert.setMode(DcMotor.RunMode.RUN_TO_POSITION);
 
-        motorLeftVert.setPower(0.6);
-        motorRightVert.setPower(0.6);
+        motorLeftVert.setPower(0.7);
+        motorRightVert.setPower(0.7);
+    }
+
+    public void extendSlides() {
+        horizontalSlideRight.setPosition(axonServoAngle(50));
+        horizontalSlideLeft.setPosition(axonServoAngle(50));
     }
 
     public void resetHang() {

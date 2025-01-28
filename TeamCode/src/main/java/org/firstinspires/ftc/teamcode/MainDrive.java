@@ -1,5 +1,6 @@
 package org.firstinspires.ftc.teamcode;
 
+import com.qualcomm.hardware.rev.Rev2mDistanceSensor;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 
@@ -65,6 +66,7 @@ public class MainDrive extends LinearOpMode {
                     r.passoverServoRight.setPosition(0);
                 }
             }
+
 
             // stop the vertical linear slides if they are not busy
             if (!r.motorLeftVert.isBusy()) r.motorLeftVert.setPower(0);
@@ -143,9 +145,6 @@ public class MainDrive extends LinearOpMode {
             r.backLeftDrive.setPower(leftBackPower * power);
             r.backRightDrive.setPower(rightBackPower * power);
 
-            // todo: try to automate the passover more, aka less button presses
-
-            // MAX DEGREES IS 0 TO 300.
 
             //close intake and open outtake
             if (gamepad2.right_trigger > 0) {
@@ -177,7 +176,6 @@ public class MainDrive extends LinearOpMode {
                 r.horizontalSlideLeft.setPosition(r.axonServoAngle(50));
                 r.passoverServoLeft.setPosition(r.axonServoAngle(228));
                 r.passoverServoRight.setPosition(r.axonServoAngle(228));
-
             }
             //pivot
             if (gamepad2.y) {
@@ -235,6 +233,11 @@ public class MainDrive extends LinearOpMode {
 
             if (gamepad2.dpad_left) {
                 r.scoreSpecimen();
+            }
+
+            if (gamepad2.right_stick_button){
+                r.outtakePositionServoLeft.setPosition(.97);
+                r.outtakePositionServoLeft.setPosition(.97);
             }
 
             /* This gives us data un parts of the robot we want
