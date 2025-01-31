@@ -87,7 +87,6 @@ public class MainDrive extends LinearOpMode {
             double heading = r.imu.getRobotYawPitchRollAngles().getYaw(AngleUnit.RADIANS);
 
             //does math stuff to keep directions constant
-            // TODO: i swtiched the heading to -heading -- small hacks like these might prove an issue later down the road. please dedicate time to figure out the root cause
             double adjustedX = y * Math.sin(heading) + x * Math.cos(heading);
             double adjustedY = y * Math.cos(heading) - x * Math.sin(heading);
 
@@ -214,7 +213,7 @@ public class MainDrive extends LinearOpMode {
 
             if (gamepad2.dpad_right) {
                 r.positionMidOuttake();
-                r.outtakeServoMidDropoff();
+                r.specimenOffWall();
             }
 
             if (gamepad2.dpad_down) {

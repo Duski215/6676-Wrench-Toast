@@ -25,34 +25,95 @@ public class SpecimenAutoRR extends LinearOpMode{
                 .addTemporalMarker(0, () -> {
                     r.horizontalSlideLeft.setPosition(r.axonServoAngle(0));
                     r.horizontalSlideRight.setPosition(r.axonServoAngle(0));
+                    r.closeOuttake();
                 })
-                .lineToLinearHeading(new Pose2d(4,-35, (3*Math.PI)/2))
-                .splineToLinearHeading(new Pose2d(35, -25, Math.PI/2), Math.PI/2)
 
-                .splineToConstantHeading(new Vector2d(47,-10), Math.toRadians(0))
+
+                .lineToLinearHeading(new Pose2d(4,-35, (3*Math.PI)/2))
+
+                .addTemporalMarker(0.5, () -> {
+                    r.specimenOffWall();
+                    r.positionMidOuttake();
+                })
+
+                .addTemporalMarker(2.75, () -> {
+                    r.scoreSpecimen();
+                })
+
+
+                .addTemporalMarker(3.6, () -> {
+                    r.openOuttake();
+                })
+
+                .waitSeconds(3.5)
+                .splineToLinearHeading(new Pose2d(35, -25, Math.PI/2), Math.PI/2)
+                // first sample
+                .splineToConstantHeading(new Vector2d(47,-13), Math.toRadians(0))
+
+                // brings it back
                 .lineToLinearHeading(new Pose2d(47,-55,Math.PI/2))
 
-                .lineToLinearHeading(new Pose2d(47,-10,Math.PI/2))
-                //issue
-                .splineToConstantHeading(new Vector2d(58,-14), Math.toRadians(0))
+                // round 2
+                .lineToLinearHeading(new Pose2d(47,-25,Math.PI/2))
+                .splineToConstantHeading(new Vector2d(56,-12), Math.toRadians(0))
 
-                .lineToLinearHeading(new Pose2d(58,-56,Math.PI/2))
+                //brings back
+                .lineToLinearHeading(new Pose2d(58,-55,Math.PI/2))
+                .lineToLinearHeading(new Pose2d(33,-57, Math.PI/2))
 
-                .lineToLinearHeading(new Pose2d(56,-10,Math.PI/2))
-                //issue
-                .splineToConstantHeading(new Vector2d(66,-14), Math.toRadians(0))
+                 .addTemporalMarker(13.5, () ->{
+                 r.closeOuttake();
+                 })
 
-                .lineToLinearHeading(new Pose2d(66,-59,Math.PI/2))
-
-                .lineToLinearHeading(new Pose2d(35,-55,Math.PI/2))
+                .waitSeconds(1)
                 .lineToLinearHeading(new Pose2d(4,-35, (3*Math.PI)/2))
-                .lineToLinearHeading(new Pose2d(35,-55,Math.PI/2))
+                 .addTemporalMarker(15, () ->{
+                r.positionMidOuttake();
+                })
 
-                .lineToLinearHeading(new Pose2d(4,-35, (3*Math.PI)/2))
-                .lineToLinearHeading(new Pose2d(35,-55,Math.PI/2))
+                .addTemporalMarker(17.7, () -> {
+                    r.scoreSpecimen();
+                })
 
-                .lineToLinearHeading(new Pose2d(4,-35, (3*Math.PI)/2))
-                .lineToLinearHeading(new Pose2d(35,-55,Math.PI/2))
+                .addTemporalMarker(18, () -> {
+                 r.openOuttake();
+                })
+
+                .addTemporalMarker(18.5, () -> {
+                 r.resetOuttakeSlides();
+                })
+
+                .waitSeconds(1)
+
+                 .addTemporalMarker(18.6, () -> {
+                     r.openOuttake();
+                 })
+
+                .lineToLinearHeading(new Pose2d(33,-55, Math.PI/2))
+                .lineToLinearHeading(new Pose2d(33,-57, Math.PI/2))
+
+                /*
+                .addTemporalMarker(21.6, () -> {
+                 r.closeOuttake();
+                })
+                .addTemporalMarker(15, () ->{
+                r.midBinOuttake();
+                })
+
+                .addTemporalMarker(17.7, () -> {
+                    r.scoreSpecimen();
+                })
+
+                .addTemporalMarker(18, () -> {
+                 r.openOuttake();
+                })
+
+                .addTemporalMarker(18.5, () -> {
+                 r.resetOuttakeSlides();
+                })
+                 */
+
+                .waitSeconds(3)
 
                 .build();
 

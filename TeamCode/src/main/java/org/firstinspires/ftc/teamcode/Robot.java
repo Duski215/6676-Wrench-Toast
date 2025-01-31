@@ -143,8 +143,8 @@ public class Robot {
         // reset encoders
         motorLeftVert.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
         motorRightVert.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-        motorLeftVert.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-        motorRightVert.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+//        motorLeftVert.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+//        motorRightVert.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
 
         motorHang.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
 
@@ -298,7 +298,7 @@ public class Robot {
     }
 
     public void openIntake() {
-        intakeClawServo.setPosition(0.35);
+        intakeClawServo.setPosition(0.40);
     }
 
     public void closeIntake() {
@@ -324,8 +324,8 @@ public class Robot {
     }
 
     public void dropDiffIntake() {
-        passoverServoLeft.setPosition(axonServoAngle(228));
-        passoverServoRight.setPosition(axonServoAngle(228));
+        passoverServoLeft.setPosition(axonServoAngle(225));
+        passoverServoRight.setPosition(axonServoAngle(225));
     }
 
     public void raiseDiffIntake() {
@@ -339,13 +339,13 @@ public class Robot {
     }
 
     public void unpivotPassover() {
-        passoverServoRight.setPosition(axonServoAngle(228));
-        passoverServoLeft.setPosition(axonServoAngle(228));
+        passoverServoRight.setPosition(axonServoAngle(225));
+        passoverServoLeft.setPosition(axonServoAngle(225));
     }
 
     public void specimenOffWall() {
-        outtakePositionServoRight.setPosition(0.97);
-        outtakePositionServoLeft.setPosition(0.97);
+        outtakePositionServoRight.setPosition(1);
+        outtakePositionServoLeft.setPosition(1);
     }
 
     public void outtakeServoTopDropoff() {
@@ -359,8 +359,8 @@ public class Robot {
     }
 
     public void resetOuttakeServo() {
-        outtakePositionServoLeft.setPosition(.16);
-        outtakePositionServoRight.setPosition(.16);
+        outtakePositionServoLeft.setPosition(.20);
+        outtakePositionServoRight.setPosition(.20);
     }
 
     public void initAprilTag() {
