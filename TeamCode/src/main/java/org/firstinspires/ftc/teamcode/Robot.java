@@ -1,5 +1,6 @@
 package org.firstinspires.ftc.teamcode;
 
+import com.acmerobotics.roadrunner.geometry.Pose2d;
 import com.qualcomm.hardware.rev.Rev2mDistanceSensor;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
@@ -23,6 +24,7 @@ import org.firstinspires.ftc.robotcore.external.hardware.camera.WebcamName;
 import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
 import org.firstinspires.ftc.robotcore.external.navigation.Position;
 import org.firstinspires.ftc.robotcore.external.navigation.YawPitchRollAngles;
+import org.firstinspires.ftc.teamcode.drive.SampleMecanumDrive;
 import org.firstinspires.ftc.vision.VisionPortal;
 import org.firstinspires.ftc.vision.apriltag.AprilTagDetection;
 import org.firstinspires.ftc.vision.apriltag.AprilTagGameDatabase;
@@ -37,10 +39,10 @@ public class Robot {
     // xy coordinates, then offset it to find the camera position
 
     // measure this before you start with the camera
-    public Position cameraPosition = new Position(DistanceUnit.INCH, -5, 0, 4, 0); //ADJUST THESE
+    public Position cameraPosition = new Position(DistanceUnit.INCH, -6.5, 3.125, 9.25, 0); //ADJUST THESE
 
     // if all values are zero (no rotation), that implies the camera is pointing straight up.
-    public YawPitchRollAngles cameraOrientation = new YawPitchRollAngles(AngleUnit.DEGREES, 0, -90, 0, 0);// AND MAYBE THESE
+    public YawPitchRollAngles cameraOrientation = new YawPitchRollAngles(AngleUnit.DEGREES, 90, -90, 0, 0);// AND MAYBE THESE
 
     public AprilTagProcessor aprilTag;
     public VisionPortal visionPortal;
@@ -66,6 +68,7 @@ public class Robot {
     public Servo horizontalSlideRight;
     public Servo passoverServoLeft;
     public Servo passoverServoRight;
+    public Servo hardStopServo;
     public DigitalChannel buttonSensor;
 
 
@@ -125,6 +128,8 @@ public class Robot {
         outtakePositionServoLeft = hardwareMap.get(Servo.class, "servo4");
         outtakePositionServoRight = hardwareMap.get(Servo.class, "servo5");
 
+        hardStopServo = hardwareMap.get(Servo.class, "exServo2");
+
         motorLeftVert = hardwareMap.get(DcMotor.class, "exMotor0");
         motorRightVert = hardwareMap.get(DcMotor.class, "exMotor1");
         motorHang = hardwareMap.get(DcMotor.class, "exMotor2");
@@ -140,6 +145,9 @@ public class Robot {
         passoverServoRight.setDirection(Servo.Direction.REVERSE);
         motorRightVert.setDirection(DcMotorSimple.Direction.REVERSE);
         outtakePositionServoLeft.setDirection(Servo.Direction.REVERSE);
+
+        hardStopServo.setDirection(Servo.Direction.REVERSE); // this ain't a typo it supposed to be right idk why
+
         // reset encoders
         motorLeftVert.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
         motorRightVert.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
@@ -173,6 +181,11 @@ public class Robot {
         // Wait for the game to start (driver presses START)
         telemetry.addData("Status", "Initialized");
         telemetry.update();
+    }
+
+    public void stopAndResetSlides() {
+        motorLeftVert.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        motorRightVert.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
     }
 
     /*everything below is considered an object. It is basically something you can give qualities to
@@ -301,16 +314,20 @@ public class Robot {
         intakeClawServo.setPosition(0.40);
     }
 
+    public void openIntakeAuto() {
+        intakeClawServo.setPosition(0.43);
+    }
+
     public void closeIntake() {
         intakeClawServo.setPosition(0.15);
     }
 
     public void openOuttake() {
-        outtakeClawServo.setPosition(0.35);
+        outtakeClawServo.setPosition(0.27);
     }
 
     public void closeOuttake() {
-        outtakeClawServo.setPosition(0.15);
+        outtakeClawServo.setPosition(0.10);
     }
 
     public void extendHorizontalSlides() {
@@ -323,9 +340,16 @@ public class Robot {
         horizontalSlideRight.setPosition(axonServoAngle(0));
     }
 
+    public void dropDiffIntakeAuto() {
+        passoverServoLeft.setPosition(axonServoAngle(250));
+        passoverServoRight.setPosition(axonServoAngle(250));
+    }
+
+
+    //was 225
     public void dropDiffIntake() {
-        passoverServoLeft.setPosition(axonServoAngle(225));
-        passoverServoRight.setPosition(axonServoAngle(225));
+        passoverServoLeft.setPosition(axonServoAngle(245));
+        passoverServoRight.setPosition(axonServoAngle(245));
     }
 
     public void raiseDiffIntake() {
@@ -334,6 +358,7 @@ public class Robot {
     }
 
     public void pivotPassover() {
+        //added ten degrees
         passoverServoRight.setPosition(axonServoAngle(315));
         passoverServoLeft.setPosition(axonServoAngle(135));
     }
@@ -359,8 +384,15 @@ public class Robot {
     }
 
     public void resetOuttakeServo() {
-        outtakePositionServoLeft.setPosition(.20);
-        outtakePositionServoRight.setPosition(.20);
+        outtakePositionServoLeft.setPosition(.185);
+        outtakePositionServoRight.setPosition(.185);
+    }
+
+    public void hardStopDisActivate(){
+        hardStopServo.setPosition(.2);
+    }
+    public void hardStopActive(){
+        hardStopServo.setPosition(.7);
     }
 
     public void initAprilTag() {
@@ -418,6 +450,19 @@ public class Robot {
         visionPortal.setProcessorEnabled(aprilTag, true);
     }
 
+    public Pose2d getRobotPositionFromAprilTags(SampleMecanumDrive drive) {
+        List<AprilTagDetection> currentDetections = aprilTag.getDetections();
+        if (currentDetections.size() > 0) {
+            // get the first detection
+            AprilTagDetection detection = currentDetections.get(0);
+            return new Pose2d(detection.robotPose.getPosition().x, detection.robotPose.getPosition().y);
+        }
+        else {
+            telemetry.addData("WARNING", "April Tag not found.");
+            return drive.getPoseEstimate();
+        }
+    }
+
     public void telemetryAprilTag() {
 
         List<AprilTagDetection> currentDetections = aprilTag.getDetections();
@@ -440,5 +485,6 @@ public class Robot {
                 telemetry.addLine(String.format("Center %6.0f %6.0f   (pixels)", detection.center.x, detection.center.y));
             }
         }   // end for() loop
+
     }
 }

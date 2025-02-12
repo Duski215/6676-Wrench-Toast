@@ -76,7 +76,7 @@ public class MainDrive extends LinearOpMode {
             // don't question it. I don't know why it works like this. It just does.
             double y = -gamepad1.left_stick_y;  // Note: pushing stick forward gives negative value
             double x = gamepad1.left_stick_x; //x
-            double rx = gamepad1.right_stick_x;//rx
+            double rx = 0.8 * gamepad1.right_stick_x;//rx
 //            double y2 = gamepad2.left_stick_y * .75 ;
 
             //will reset the direction of the robot relative of the position it is currently at
@@ -104,7 +104,7 @@ public class MainDrive extends LinearOpMode {
             max = Math.max(max, Math.abs(rightBackPower));
 
             //sets default speed
-            double default_power = .95;
+            double default_power = .80;
             double power = default_power;
 
             //slow mode
@@ -131,12 +131,12 @@ public class MainDrive extends LinearOpMode {
             }
 
             //converts from field oriented drive to robot oriented drive
-            if (!gamepad1.left_bumper & r.toggleSwitch) {
-                leftFrontPower = y + x + rx;
-                rightFrontPower = y - x - rx;
-                leftBackPower = y - x + rx;
-                rightBackPower = y + x - rx;
-            }
+//            if (!gamepad1.left_bumper & r.toggleSwitch) {
+//                leftFrontPower = y + x + rx;
+//                rightFrontPower = y - x - rx;
+//                leftBackPower = y - x + rx;
+//                rightBackPower = y + x - rx;
+//            }
 
             // drive
             r.frontLeftDrive.setPower(leftFrontPower * power);
@@ -191,14 +191,13 @@ public class MainDrive extends LinearOpMode {
                 r.unpivotPassover();
             }
 
-//          if (gamepad2.x) {
-//                outtakePositionServoLeft.setPosition(.2);
-//                outtakePositionServoRight.setPosition(.2);
-//            }
-//            if (gamepad2.y) {
-//                outtakePositionServoLeft.setPosition(0.75);
-//                outtakePositionServoRight.setPosition(0.75);
-//            }
+            if (gamepad1.a){
+                r.hardStopActive();
+            }
+
+            if (gamepad1.b){
+                r.hardStopDisActivate();
+            }
 
             //grabs specimen from wall
             if (gamepad2.right_bumper) {

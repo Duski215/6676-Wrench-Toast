@@ -17,7 +17,7 @@ public class SpecimenAutoRR extends LinearOpMode{
 
         SampleMecanumDrive drive = new SampleMecanumDrive(hardwareMap);
 
-        Pose2d startPose = new Pose2d(7.75, -62, Math.PI/2);
+        Pose2d startPose = new Pose2d(7.75, -62, (3*Math.PI)/2);
 
         drive.setPoseEstimate(startPose);
 

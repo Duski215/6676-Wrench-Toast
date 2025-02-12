@@ -25,17 +25,21 @@ public class MeepMeepTest {
         double closeAndOpenIntakeClaw = 0.6;
         double passoverTime = 0.4;
         double firstSampleToBin = 1;
+        double moveToThirdSample = 2;
+
 
         Pose2d startPose = new Pose2d(-10, -65, Math.PI/2);
         Pose2d closeToBin = new Pose2d(-48, -55, Math.PI/4);
         Pose2d atBin = new Pose2d(-56.75, -62.75, Math.PI/4);
         Pose2d firstSamplePosition = new Pose2d(-46.3, -52, Math.PI/2);
         Pose2d secondSamplePosition = new Pose2d(-57.3, -51, Math.PI/2);
+        Pose2d thirdSamplePosition = new Pose2d(-44.7, -25, Math.PI);
+
 
         RoadRunnerBotEntity myBot = new DefaultBotBuilder(meepMeep)
                 // Set bot constraints: maxVel, maxAccel, maxAngVel, maxAngAccel, track width
                 .setConstraints(38, 60, Math.toRadians(180), Math.toRadians(180), 15)
-                .followTrajectorySequence(drive -> drive.trajectorySequenceBuilder(new Pose2d(-10, -65, Math.PI/2))
+                .followTrajectorySequence(drive -> drive.trajectorySequenceBuilder(startPose)
 
                         .splineToLinearHeading(closeToBin, 3*Math.PI/4) // 2sqrt2 away from the bin
                         // move to the bin
@@ -163,6 +167,13 @@ public class MeepMeepTest {
 //                            // immediately start moving. forget about passover time, that will be encompassed by the movetobin time
 //                        })
                         // move back to bin to immediately move the linear slides up
+                        .lineToLinearHeading(atBin)
+
+                        .lineToLinearHeading(thirdSamplePosition)
+                        // wait diffVertTime, then grab command
+                        // move back to at bin
+                        // TOTAL TRAJECTORY WAIT: MOVETOTHIRDSAMPLE, EXTEND, PIVOT+0.2, GRAB
+                        .waitSeconds(moveToThirdSample + extendSlides + diffVertTime + 0.2 + closeAndOpenIntakeClaw - 2)
                         .lineToLinearHeading(atBin)
 
                         .build());

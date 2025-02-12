@@ -1,21 +1,30 @@
 package org.firstinspires.ftc.teamcode;
 
+import androidx.appcompat.app.WindowDecorActionBar;
+
 import com.acmerobotics.roadrunner.geometry.Pose2d;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 
+import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
 import org.firstinspires.ftc.teamcode.drive.SampleMecanumDrive;
 import org.firstinspires.ftc.teamcode.trajectorysequence.TrajectorySequence;
+import org.firstinspires.ftc.vision.VisionPortal;
+import org.firstinspires.ftc.vision.apriltag.AprilTagDetection;
+import org.firstinspires.ftc.vision.apriltag.AprilTagProcessor;
+
+import java.util.List;
 
 @Autonomous(name="Sample 1+3")
 public class SampleAutoRR extends LinearOpMode {
     public Robot r;
-
     double timeStamp1 = 0;
 
     @Override
     public void runOpMode() {
         r = new Robot(hardwareMap, telemetry);
+
+        r.stopAndResetSlides(); // auto should always be resetting vert encoder
 
         SampleMecanumDrive drive = new SampleMecanumDrive(hardwareMap);
 
@@ -33,14 +42,19 @@ public class SampleAutoRR extends LinearOpMode {
         double passoverTime = 0.4;
         double firstSampleToBin = 1;
 
-        Pose2d startPose = new Pose2d(-10, -65, Math.PI/2);
+        // TODO: delete this
+        Pose2d startPose = new Pose2d(-10.2, -65, Math.PI/2);
         Pose2d closeToBin = new Pose2d(-48, -55, Math.PI/4);
-        Pose2d atBin = new Pose2d(-55.75, -63.75, Math.PI/4);
-        Pose2d firstSamplePosition = new Pose2d(-46.5, -52, Math.PI/2);
-        Pose2d secondSamplePosition = new Pose2d(-55.5, -53.3, Math.PI/2);
-        Pose2d thirdSamplePosition = new Pose2d(-46.5, -33, Math.PI);
+        Pose2d atBin = new Pose2d(-56.30, -64.60, Math.PI/4);
+        Pose2d firstSamplePosition = new Pose2d(-47.17, -52.4, Math.PI/2);
+        Pose2d secondSamplePosition = new Pose2d(-55.0, -52.5, Math.PI/2);
+        Pose2d thirdSamplePosition = new Pose2d(-48.00, -33.8, Math.PI);
 
-        drive.setPoseEstimate(startPose);
+        r.initAprilTag();
+
+        drive.setPoseEstimate(startPose); // initialize it to theoretical start
+        startPose = r.getRobotPositionFromAprilTags(drive); // get the start pose from april tags
+        drive.setPoseEstimate(startPose); // set it to the start pose based on the april tags (if it even changed)
 
         TrajectorySequence mainTrajSeq = drive.trajectorySequenceBuilder(startPose)
                 .addTemporalMarker(0, () -> {
@@ -74,13 +88,14 @@ public class SampleAutoRR extends LinearOpMode {
                     r.openOuttake();
                     r.resetOuttakeSlides();
                 })
+
                 // move to first sample
                 .lineToLinearHeading(firstSamplePosition)
                 .waitSeconds(moveToFirstSample)
                 // extend horizontal slides and open intake claw
                 .addTemporalMarker(5.9, () -> { // extend differential claw
                     r.extendHorizontalSlides();
-                    r.openIntake();
+                    r.openIntakeAuto();
                 })
                 // now it might be too fast, gotta add a buffer
                 .waitSeconds(1.1) // this is a terrible way to debug but i dont give a fuck
@@ -107,11 +122,14 @@ public class SampleAutoRR extends LinearOpMode {
                 .addTemporalMarker(7.9, () -> {
                     r.retractHorizontalSlides();
                 })
+                // close outtake first
+                .addTemporalMarker(8.25, () -> {
+                    r.closeOuttake();
+                })
                 // just wait for retract slides IN TEMPORAL MARKER
                 // passover sample
                 .addTemporalMarker(8.4, () -> {
-                    r.closeOuttake();
-                    r.openIntake();
+                    r.openIntakeAuto();
                     // immediately start moving, no waiting
                 })
                 // to save time start the linear slides going up already; wait for firstSampleToBin
@@ -126,7 +144,7 @@ public class SampleAutoRR extends LinearOpMode {
                 })
                 .waitSeconds(outtakeServoDown)
                 // open outtake claw
-                .addTemporalMarker(10.2, () -> {
+                .addTemporalMarker(10.5, () -> {
                     r.openOuttake();
                 })
                 // wait a tiny second for the outtake claw to open, the move the outtake position back down
@@ -146,7 +164,7 @@ public class SampleAutoRR extends LinearOpMode {
                 .addTemporalMarker(12.8, () -> { // extend horizontal slides
                     r.extendHorizontalSlides();
                     // also open intake servo
-                    r.openIntake();
+                    r.openIntakeAuto();
                 })
                 .waitSeconds(extendSlides)
                 // move diff servo down
@@ -169,12 +187,15 @@ public class SampleAutoRR extends LinearOpMode {
                     r.retractHorizontalSlides();
                 })
                 .waitSeconds(extendSlides+0.05) // retract and extend same time dont matter
-                .addTemporalMarker(14.8, () -> {
-                    // passover the sample
+                // MIGHT NOT WORK
+                .addTemporalMarker(14.7, () -> {
                     // close outtake claw
                     r.closeOuttake();
+                })
+                .addTemporalMarker(14.8, () -> {
+                    // passover the sample
                     // let go of the intake claw
-                    r.openIntake();
+                    r.openIntakeAuto();
                     // immediately start moving. forget about passover time, that will be encompassed by the movetobin time
                 })
                 // move back to bin to immediately move the linear slides up
@@ -203,18 +224,13 @@ public class SampleAutoRR extends LinearOpMode {
                 })
                 // wait a tiny second then reset outtake to avoid clipping onto the top bin
                 .waitSeconds(0.3)
+                // SIMULTANEOUSLY drop slides and move to third sample. extend slides and drop diff intake -- thats all for current test
                 .addTemporalMarker(18.9, () -> {
                     r.resetOuttakeSlides();
-                })
-                // SIMULTANEOUSLY drop slides and move to third sample. extend slides -- thats all for current test
-                .lineToLinearHeading(thirdSamplePosition)
-                .addTemporalMarker(21.5, () -> {
                     r.extendHorizontalSlides();
-                })
-                // extend + 0.2, then pivot
-                .addTemporalMarker(22.2, () -> {
                     r.pivotPassover();
                 })
+                .lineToLinearHeading(thirdSamplePosition)
                 // wait diffVertTime, then grab command
                 .addTemporalMarker(22.7, () -> {
                     r.closeIntake();
@@ -223,16 +239,20 @@ public class SampleAutoRR extends LinearOpMode {
                 .addTemporalMarker(23.3, () -> {
                     // COMEBACK if this doesnt work in second sample
                     r.raiseDiffIntake();
+                })
+                .addTemporalMarker(23.55, () -> {
                     r.retractHorizontalSlides();
                 })
                 // move back to at bin
                 // TOTAL TRAJECTORY WAIT: MOVETOTHIRDSAMPLE, EXTEND, PIVOT+0.2, GRAB
                 .waitSeconds(moveToThirdSample + extendSlides + diffVertTime + 0.2 + closeAndOpenIntakeClaw - 2)
                 .lineToLinearHeading(atBin)
-                .addTemporalMarker(23.8, () -> {
-                    // passover jawn
-                    r.openIntake();
+                .addTemporalMarker(23.95, () -> {
                     r.closeOuttake();
+                })
+                .addTemporalMarker(24.1, () -> {
+                    // passover jawn
+                    r.openIntakeAuto();
                 })
                 .addTemporalMarker(24.2, () -> {
                     // raise slides
@@ -246,9 +266,12 @@ public class SampleAutoRR extends LinearOpMode {
                     // open outtake claw
                     r.openOuttake();
                 })
-                .addTemporalMarker(28, () -> {
-                    // reset outtake and drop the slides down
+                .addTemporalMarker(27.65, () -> {
+                    // reset outtake and
                     r.resetOuttakeServo();
+                })
+                .addTemporalMarker(28, () -> {
+                    // drop the slides down
                     r.resetOuttakeSlides();
                 })
                 .waitSeconds(20) // just so it doesnt stop before i want it to
@@ -262,6 +285,7 @@ public class SampleAutoRR extends LinearOpMode {
 
         if (isStopRequested()) return;
 
+        r.telemetryAprilTag();
         drive.followTrajectorySequence(mainTrajSeq);
     }
 }

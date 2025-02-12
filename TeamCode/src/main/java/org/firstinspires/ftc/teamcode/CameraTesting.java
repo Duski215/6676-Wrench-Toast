@@ -14,6 +14,7 @@ import org.firstinspires.ftc.vision.VisionPortal;
 import org.firstinspires.ftc.vision.apriltag.AprilTagDetection;
 import org.firstinspires.ftc.vision.apriltag.AprilTagGameDatabase;
 import org.firstinspires.ftc.vision.apriltag.AprilTagProcessor;
+import org.opencv.core.Point;
 
 import java.util.List;
 
@@ -21,13 +22,13 @@ import java.util.List;
 public class CameraTesting extends LinearOpMode {
     // NOTE: if XYZ values are (0, 0, 0), then that means all the camera is at the dead center of the robot. find all distances from the *center* of the robot (the height of the "center" of the robot is 0 --- just measure the height of the camera off the ground. define the "center" of the robot xy coordinates, then offset it to find the camera position
     // measure this before you start with the camera
-    private Position cameraPosition = new Position(DistanceUnit.INCH, -5, 0, 4, 0); //ADJUST THESE
+    public Position cameraPosition = new Position(DistanceUnit.INCH, -6.5, 3.125, 9.25, 0); //ADJUST THESE
 
     // if all values are zero (no rotation), that implies the camera is pointing straight up.
-    private YawPitchRollAngles cameraOrientation = new YawPitchRollAngles(AngleUnit.DEGREES, 0,-90,0,0);// AND MAYBE THESE
+    public YawPitchRollAngles cameraOrientation = new YawPitchRollAngles(AngleUnit.DEGREES, 90, -90, 0, 0);// AND MAYBE THESE
 
-    private AprilTagProcessor aprilTag;
-    private VisionPortal visionPortal;
+    public AprilTagProcessor aprilTag;
+    public VisionPortal visionPortal;
 
     @Override
     public void runOpMode() {
@@ -71,8 +72,8 @@ public class CameraTesting extends LinearOpMode {
                 //.setDrawCubeProjection(false)
                 //.setDrawTagOutline(true)
                 //.setTagFamily(AprilTagProcessor.TagFamily.TAG_36h11)
-                .setTagLibrary(AprilTagGameDatabase.getCenterStageTagLibrary())
-//                .setOutputUnits(DistanceUnit.INCH, AngleUnit.DEGREES)
+                .setTagLibrary(AprilTagGameDatabase.getIntoTheDeepTagLibrary())
+                .setOutputUnits(DistanceUnit.INCH, AngleUnit.DEGREES)
                 .setCameraPose(cameraPosition, cameraOrientation)
 
                 // == CAMERA CALIBRATION ==
@@ -90,7 +91,7 @@ public class CameraTesting extends LinearOpMode {
         // Decimation = 3 ..  Detect 2" Tag from 4  feet away at 30 Frames Per Second (default)
         // Decimation = 3 ..  Detect 5" Tag from 10 feet away at 30 Frames Per Second (default)
         // Note: Decimation can be changed on-the-fly to adapt during a match.
-        //aprilTag.setDecimation(3);
+        aprilTag.setDecimation(3);
 
         // Create the vision portal by using a builder.
         VisionPortal.Builder builder = new VisionPortal.Builder();
@@ -146,6 +147,8 @@ public class CameraTesting extends LinearOpMode {
                 telemetry.addLine(String.format("Center %6.0f %6.0f   (pixels)", detection.center.x, detection.center.y));
             }
         }   // end for() loop
+
+
 
         // Add "key" information to telemetry
         telemetry.addLine("\nkey:\nXYZ = X (Right), Y (Forward), Z (Up) dist.");
