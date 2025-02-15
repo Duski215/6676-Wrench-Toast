@@ -37,6 +37,27 @@ import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
 @TeleOp(name="Main Drive", group="Linear OpMode")
 public class MainDrive extends LinearOpMode {
     public Robot r;
+    public Boolean buffer = false;
+
+    private double startTime;
+    private double bufferTime = 0.6; // this is variable. tune for better time
+
+    public void startHardstopBuffer() {
+        buffer = true;
+        startTime = r.runtime.time();
+    }
+
+    public void hardstopBufferAction() {
+        double time = r.runtime.time();
+        if (time - startTime > bufferTime) {// if elapsed time is greater than the buffered time, then close the claw and reset buffer
+            // activate the hardstop claw
+            r.activateHardStop();
+
+            // reset buffer
+            buffer = false;
+            startTime = 0; // technically dont need this but im just doing it
+        }
+    }
 
     @Override
     public void runOpMode() throws InterruptedException {
@@ -47,6 +68,7 @@ public class MainDrive extends LinearOpMode {
 
         // reset imu
         r.imu.resetYaw();
+        // reset runtime
         r.runtime.reset();
 
         while (opModeIsActive()) {
@@ -67,6 +89,10 @@ public class MainDrive extends LinearOpMode {
                 }
             }
 
+            // buffer logic (for hardstop)
+            if (buffer) {
+                hardstopBufferAction(); // buffer logic for the hardstop claw
+            }
 
             // stop the vertical linear slides if they are not busy
             if (!r.motorLeftVert.isBusy()) r.motorLeftVert.setPower(0);
@@ -173,6 +199,9 @@ public class MainDrive extends LinearOpMode {
                 //also set servo range to the specific rotation we need
                 r.extendHorizontalSlides();
                 r.dropDiffIntake();
+
+                // begin hardstop buffer
+                startHardstopBuffer();
             }
 
             // retract
@@ -191,12 +220,14 @@ public class MainDrive extends LinearOpMode {
                 r.unpivotPassover();
             }
 
+            // i think we will leave these in for failsafes
             if (gamepad1.a){
-                r.hardStopActive();
+                if (r.horizontalSlidesExtended) break; // if slides are extended, do not activate hardstop
+                r.activateHardStop();
             }
 
             if (gamepad1.b){
-                r.hardStopDisActivate();
+                r.disableHardStop();
             }
 
             //grabs specimen from wall

@@ -104,6 +104,8 @@ public class Robot {
     private Telemetry telemetry;
     private HardwareMap hardwareMap;
 
+    // ROBOT STATES
+    public Boolean horizontalSlidesExtended = false;
 
     public Robot(HardwareMap hardwareMap, Telemetry telemetry) {
         this.hardwareMap = hardwareMap;
@@ -333,11 +335,15 @@ public class Robot {
     public void extendHorizontalSlides() {
         horizontalSlideRight.setPosition(axonServoAngle(50));
         horizontalSlideLeft.setPosition(axonServoAngle(50));
+        
+        horizontalSlidesExtended = true;
     }
 
     public void retractHorizontalSlides() {
         horizontalSlideLeft.setPosition(axonServoAngle(0));
         horizontalSlideRight.setPosition(axonServoAngle(0));
+        
+        horizontalSlidesExtended = false;
     }
 
     public void dropDiffIntakeAuto() {
@@ -388,10 +394,10 @@ public class Robot {
         outtakePositionServoRight.setPosition(.185);
     }
 
-    public void hardStopDisActivate(){
+    public void disableHardStop(){
         hardStopServo.setPosition(.2);
     }
-    public void hardStopActive(){
+    public void activateHardStop(){
         hardStopServo.setPosition(.7);
     }
 
