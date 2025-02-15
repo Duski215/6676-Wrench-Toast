@@ -206,6 +206,10 @@ public class MainDrive extends LinearOpMode {
 
             // retract
             if (gamepad2.b) {
+                // remove hardstop
+                r.disableHardStop();
+
+                // retract slides
                 r.retractHorizontalSlides();
                 // diff intake might be too slow during transition, may need to add buffer
                 r.raiseDiffIntake();
