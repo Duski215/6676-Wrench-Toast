@@ -195,24 +195,24 @@ public class MainDrive extends LinearOpMode {
 
             // extend
             if (gamepad2.a) {
+                // remove hardstop
+                r.disableHardStop();
+
                 //SUBJECT TO CHANGE DUE TO MECHANICAL AND SERVO RANGE
                 //also set servo range to the specific rotation we need
                 r.extendHorizontalSlides();
                 r.dropDiffIntake();
-
-                // begin hardstop buffer
-                startHardstopBuffer();
             }
 
             // retract
             if (gamepad2.b) {
-                // remove hardstop
-                r.disableHardStop();
-
                 // retract slides
                 r.retractHorizontalSlides();
                 // diff intake might be too slow during transition, may need to add buffer
                 r.raiseDiffIntake();
+
+                // begin hardstop buffer
+                startHardstopBuffer();
             }
 
             //pivot
