@@ -90,7 +90,7 @@ public class Robot {
     double topBinHeightInches = -28;
     double midHangInches = -20;
     double topHangInches = -36;
-    double topChamber = -14;
+    double topChamber = -18;
     double scoreSpecimen = -10;
     //toggleSwitch between Field Centric Drive to Robot Centric Drive
     boolean toggleSwitch = false;
@@ -173,7 +173,8 @@ public class Robot {
         ));
 
         imu.initialize(parameters);
-        initAprilTag();
+//        initAprilTag();
+        // no camera shit
 
         // Wait for the DS start button to be touched.
         telemetry.addData("DS preview on/off", "3 dots, Camera Stream");
@@ -325,11 +326,11 @@ public class Robot {
     }
 
     public void openOuttake() {
-        outtakeClawServo.setPosition(0.27);
+        outtakeClawServo.setPosition(0.20);
     }
 
     public void closeOuttake() {
-        outtakeClawServo.setPosition(0.10);
+        outtakeClawServo.setPosition(0.06);
     }
 
     public void extendHorizontalSlides() {
@@ -358,6 +359,11 @@ public class Robot {
         passoverServoRight.setPosition(axonServoAngle(245));
     }
 
+    public void resetDiffIntake() {
+        passoverServoLeft.setPosition(axonServoAngle(120));
+        passoverServoRight.setPosition(axonServoAngle(120));
+    }
+
     public void raiseDiffIntake() {
         passoverServoRight.setPosition(axonServoAngle(0));
         passoverServoLeft.setPosition(axonServoAngle(0));
@@ -365,13 +371,13 @@ public class Robot {
 
     public void pivotPassover() {
         //added ten degrees
-        passoverServoRight.setPosition(axonServoAngle(315));
-        passoverServoLeft.setPosition(axonServoAngle(135));
+        passoverServoRight.setPosition(axonServoAngle(310));
+        passoverServoLeft.setPosition(axonServoAngle(130));
     }
 
     public void unpivotPassover() {
-        passoverServoRight.setPosition(axonServoAngle(225));
-        passoverServoLeft.setPosition(axonServoAngle(225));
+        passoverServoRight.setPosition(axonServoAngle(245));
+        passoverServoLeft.setPosition(axonServoAngle(245));
     }
 
     public void specimenOffWall() {
@@ -390,15 +396,15 @@ public class Robot {
     }
 
     public void resetOuttakeServo() {
-        outtakePositionServoLeft.setPosition(.185);
-        outtakePositionServoRight.setPosition(.185);
+        outtakePositionServoLeft.setPosition(.155);
+        outtakePositionServoRight.setPosition(.155);
     }
 
-    public void disableHardStop(){
-        hardStopServo.setPosition(.2);
-    }
-    public void activateHardStop(){
+    public void disableHardStop() {
         hardStopServo.setPosition(.7);
+    }
+    public void activateHardStop() {
+        hardStopServo.setPosition(.4);
     }
 
     public void initAprilTag() {

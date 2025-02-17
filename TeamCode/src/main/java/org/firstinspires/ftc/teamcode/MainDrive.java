@@ -38,13 +38,28 @@ import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
 public class MainDrive extends LinearOpMode {
     public Robot r;
     public Boolean buffer = false;
+    public Boolean passoverBuffer = false;
 
     private double startTime;
+    private double passoverStartTime;
+
     private double bufferTime = 0.6; // this is variable. tune for better time
+    private double passoverBufferTime = 0.6;
+    private boolean intakeClawToggle = true;
+    private boolean outtakeClawToggle = false;
+
+    private double allowed_intake_toggle_time = 0; // this will be set to runtime during loop
+    private double allowed_outtake_toggle_time = 0;
+    private double toggle_time = 0.5;
 
     public void startHardstopBuffer() {
         buffer = true;
         startTime = r.runtime.time();
+    }
+
+    public void startPassoverBuffer() {
+        passoverBuffer = true;
+        passoverStartTime = r.runtime.time();
     }
 
     public void hardstopBufferAction() {
@@ -56,6 +71,18 @@ public class MainDrive extends LinearOpMode {
             // reset buffer
             buffer = false;
             startTime = 0; // technically dont need this but im just doing it
+        }
+    }
+
+    public void passoverBufferAction() {
+        double time = r.runtime.time();
+        if (time - passoverStartTime > passoverBufferTime) {// if elapsed time is greater than the buffered time, then close the claw and reset buffer
+            // now open the intake
+            r.openIntake();
+
+            // reset buffer
+            passoverBuffer = false;
+            passoverBufferTime = 0; // technically dont need this but im just doing it
         }
     }
 
@@ -71,9 +98,12 @@ public class MainDrive extends LinearOpMode {
         // reset runtime
         r.runtime.reset();
 
+        allowed_intake_toggle_time = r.runtime.time();
+        allowed_outtake_toggle_time = r.runtime.time();
+
         while (opModeIsActive()) {
             // teleop logic
-            r.telemetryAprilTag();
+//            r.telemetryAprilTag();
             // Push telemetry to the Driver Station.
             telemetry.update();
 
@@ -92,6 +122,10 @@ public class MainDrive extends LinearOpMode {
             // buffer logic (for hardstop)
             if (buffer) {
                 hardstopBufferAction(); // buffer logic for the hardstop claw
+            }
+
+            if (passoverBuffer) {
+                passoverBufferAction();
             }
 
             // stop the vertical linear slides if they are not busy
@@ -170,33 +204,34 @@ public class MainDrive extends LinearOpMode {
             r.backLeftDrive.setPower(leftBackPower * power);
             r.backRightDrive.setPower(rightBackPower * power);
 
+            double time = r.runtime.time();
 
             //close intake and open outtake
-            if (gamepad2.right_trigger > 0) {
+            if (gamepad2.right_trigger > 0 && time > allowed_intake_toggle_time) {
+                intakeClawToggle = !intakeClawToggle;
+                allowed_intake_toggle_time = time + toggle_time;
+            }
+            if (intakeClawToggle){
+                r.openIntake();
+            } else {
                 r.closeIntake();
-                r.openOuttake();
             }
 
-//            if (gamepad2.right_trigger > 0) {
-//                outtakeClawServo.setPosition(servoAngle(120));
-//                intakeClawServo.setPosition(servoAngle(45));
-//            }
+            if (gamepad2.left_trigger > 0 && time > allowed_outtake_toggle_time) {
+                outtakeClawToggle = !outtakeClawToggle;
+                allowed_outtake_toggle_time = time + toggle_time;
+            }
 
-            //open intake and close outtake
-            if (gamepad2.left_trigger > 0) {
-                r.openIntake();
+            if (outtakeClawToggle){
+                r.openOuttake();
+            } else if (!outtakeClawToggle){
                 r.closeOuttake();
             }
-//
-//            if (gamepad2.left_trigger > 0) {
-//                outtakeClawServo.setPosition(servoAngle(45));
-//                intakeClawServo.setPosition(servoAngle(120));
-//            }
 
             // extend
             if (gamepad2.a) {
                 // remove hardstop
-                r.disableHardStop();
+//                r.disableHardStop();
 
                 //SUBJECT TO CHANGE DUE TO MECHANICAL AND SERVO RANGE
                 //also set servo range to the specific rotation we need
@@ -212,7 +247,7 @@ public class MainDrive extends LinearOpMode {
                 r.raiseDiffIntake();
 
                 // begin hardstop buffer
-                startHardstopBuffer();
+//                startHardstopBuffer();
             }
 
             //pivot
@@ -246,7 +281,7 @@ public class MainDrive extends LinearOpMode {
             }
 
             if (gamepad2.dpad_right) {
-                r.positionMidOuttake();
+                r.topChamber();
                 r.specimenOffWall();
             }
 
@@ -276,7 +311,7 @@ public class MainDrive extends LinearOpMode {
         }
         // end teleop mode
 
-        r.visionPortal.close();
+//        r.visionPortal.close();
         // saves CPU
     }
 }
